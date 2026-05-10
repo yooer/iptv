@@ -33,6 +33,9 @@
 
 ## 安装与部署
 
+> [!IMPORTANT]
+> 生产环境部署（含 Linux Systemd 守护进程配置）请参考：[详细部署手册 (DEPLOY.md)](./DEPLOY.md)
+
 ### 环境要求
 *   **操作系统**: Windows / Linux / macOS
 *   **数据库**: MongoDB 4.0+
