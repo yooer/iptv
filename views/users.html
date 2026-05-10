@@ -121,7 +121,7 @@
             const tbody = document.getElementById('user_list');
             tbody.innerHTML = users.map(u => `
                 <tr>
-                    <td><code>${u.Mail}</code></td>
+                    <td><code>${u.mail}</code></td>
                     <td><span class="user-name">${u.name || '-'}</span></td>
                     <td>
                         <span class="badge ${u.level === 100 ? 'badge-admin' : 'badge-user'}">
@@ -130,8 +130,8 @@
                     </td>
                     <td style="text-align:center;">
                         <div style="display:flex; gap:8px; justify-content:center;">
-                            <button class="btn-action" onclick="showEditModal('${u.Mail}', '${u.name}', ${u.level})" title="修改资料"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button class="btn-action del" onclick="delUser('${u.Mail}')" title="删除账号"><i class="fa-solid fa-trash-can"></i></button>
+                            <button class="btn-action" onclick="showEditModal('${u.mail}', '${u.name}', ${u.level})" title="修改资料"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="btn-action del" onclick="delUser('${u.mail}')" title="删除账号"><i class="fa-solid fa-trash-can"></i></button>
                         </div>
                     </td>
                 </tr>

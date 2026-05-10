@@ -1,0 +1,355 @@
+###############################################
+# Global settings
+# Settings in this section are applied anywhere.
+###############################################
+
+###############################################
+# Global settings -> General
+
+logLevel: info
+logDestinations: [stdout]
+logStructured: false
+logFile: mediamtx.log
+sysLogPrefix: mediamtx
+dumpPackets: false
+
+readTimeout: 10s
+writeTimeout: 10s
+writeQueueSize: 512
+udpMaxPayloadSize: 1452
+udpReadBufferSize: 0
+
+runOnConnect:
+runOnConnectRestart: false
+runOnDisconnect:
+
+###############################################
+# Global settings -> Authentication
+
+authMethod: internal
+
+authInternalUsers:
+- user: any
+  pass:
+  ips: []
+  permissions:
+  - action: publish
+    path:
+  - action: read
+    path:
+  - action: playback
+    path:
+
+- user: {{MTX_USER}}
+  pass: {{MTX_PASS}}
+  ips: []
+  permissions:
+  - action: api
+  - action: metrics
+  - action: pprof
+
+authHTTPAddress:
+authHTTPFingerprint:
+authHTTPExclude:
+- action: api
+- action: metrics
+- action: pprof
+
+authJWTJWKS:
+authJWTJWKSFingerprint:
+authJWTClaimKey: mediamtx_permissions
+authJWTExclude: []
+authJWTIssuer:
+authJWTAudience:
+
+###############################################
+# Global settings -> Control API
+
+api: yes
+apiAddress: :{{MTX_API_PORT}}
+apiEncryption: false
+apiServerKey: server.key
+apiServerCert: server.crt
+apiAllowOrigins: ['*']
+apiTrustedProxies: []
+
+###############################################
+# Global settings -> Metrics
+
+metrics: false
+metricsAddress: :{{MTX_METRICS_PORT}}
+metricsEncryption: false
+metricsServerKey: server.key
+metricsServerCert: server.crt
+metricsAllowOrigins: ['*']
+metricsTrustedProxies: []
+
+###############################################
+# Global settings -> PPROF
+
+pprof: false
+pprofAddress: :9999
+pprofEncryption: false
+pprofServerKey: server.key
+pprofServerCert: server.crt
+pprofAllowOrigins: ['*']
+pprofTrustedProxies: []
+
+###############################################
+# Global settings -> Playback server
+
+playback: false
+playbackAddress: :9996
+playbackEncryption: false
+playbackServerKey: server.key
+playbackServerCert: server.crt
+playbackAllowOrigins: ['*']
+playbackTrustedProxies: []
+
+###############################################
+# Global settings -> RTSP server
+
+rtsp: true
+rtspTransports: [udp, multicast, tcp]
+rtspEncryption: "no"
+rtspAddress: :{{MTX_RTSP_PORT}}
+rtspsAddress: :8322
+rtpAddress: :8000
+rtcpAddress: :8001
+multicastIPRange: 224.1.0.0/16
+multicastRTPPort: 8002
+multicastRTCPPort: 8003
+srtpAddress: :8004
+srtcpAddress: :8005
+multicastSRTPPort: 8006
+multicastSRTCPPort: 8007
+rtspServerKey: server.key
+rtspServerCert: server.crt
+rtspAuthMethods: [basic]
+
+###############################################
+# Global settings -> RTMP server
+
+rtmp: true
+rtmpEncryption: "no"
+rtmpAddress: :1937
+rtmpsAddress: :1936
+rtmpServerKey: server.key
+rtmpServerCert: server.crt
+
+###############################################
+# Global settings -> HLS server
+
+hls: true
+hlsAddress: :{{MTX_HLS_PORT}}
+hlsEncryption: false
+hlsServerKey: server.key
+hlsServerCert: server.crt
+hlsAllowOrigins: ['*']
+hlsTrustedProxies: []
+hlsAlwaysRemux: true
+hlsVariant: mpegts
+hlsSegmentCount: 10
+hlsSegmentDuration: 2s
+hlsPartDuration: 200ms
+hlsSegmentMaxSize: 50M
+hlsDirectory: '/dev/shm/mediamtx'
+hlsMuxerCloseAfter: 60s
+hlsCDNSecret: ''
+
+###############################################
+# Global settings -> WebRTC server
+
+webrtc: true
+webrtcAddress: :8889
+webrtcEncryption: false
+webrtcServerKey: server.key
+webrtcServerCert: server.crt
+webrtcAllowOrigins: ['*']
+webrtcTrustedProxies: []
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: ''
+webrtcIPsFromInterfaces: true
+webrtcIPsFromInterfacesList: []
+webrtcAdditionalHosts: []
+webrtcICEServers2: []
+webrtcSTUNGatherTimeout: 5s
+webrtcHandshakeTimeout: 10s
+webrtcTrackGatherTimeout: 2s
+
+###############################################
+# Global settings -> SRT server
+
+srt: true
+srtAddress: :8890
+
+###############################################
+# Default path settings
+
+pathDefaults:
+  source: publisher
+  sourceFingerprint:
+  sourceOnDemand: no
+  sourceOnDemandStartTimeout: 10s
+  sourceOnDemandCloseAfter: 10s
+  maxReaders: 0
+  srtReadPassphrase:
+  useAbsoluteTimestamp: false
+
+  alwaysAvailable: false
+  alwaysAvailableTracks: []
+  alwaysAvailableFile: ''
+
+  record: false
+  recordPath: ./recordings/%path/%Y-%m-%d_%H-%M-%S-%f
+  recordFormat: fmp4
+  recordPartDuration: 1s
+  recordMaxPartSize: 50M
+  recordSegmentDuration: 1h
+  recordDeleteAfter: 1d
+
+  overridePublisher: true
+  srtPublishPassphrase:
+  rtspDemuxMpegts: false
+
+  rtspTransport: automatic
+  rtspAnyPort: false
+  rtspRangeType:
+  rtspRangeStart:
+  rtspUDPSourcePortRange: [10000, 65535]
+
+  rtpSDP:
+
+  whepBearerToken: ''
+  whepSTUNGatherTimeout: 5s
+  whepHandshakeTimeout: 10s
+  whepTrackGatherTimeout: 2s
+
+  runOnInit:
+  runOnInitRestart: false
+  runOnDemand:
+  runOnDemandRestart: false
+  runOnDemandStartTimeout: 10s
+  runOnDemandCloseAfter: 10s
+  runOnUnDemand:
+  runOnReady:
+  runOnReadyRestart: false
+  runOnNotReady:
+  runOnRead:
+  runOnReadRestart: false
+  runOnUnread:
+  runOnRecordSegmentCreate:
+  runOnRecordSegmentComplete:
+
+###############################################
+# Path settings
+
+paths:
+  # 后续由后台动态注入
+  all_others:
+  ahh: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/AHH/AHH.m3u8, sourceOnDemand: no }
+  ay1: { source: http://os.ott.henancatv.com/live/AY1/AY1.m3u8, sourceOnDemand: no }
+  bda: { source: http://os.ott.henancatv.com/live/BDA/BDA.m3u8, sourceOnDemand: no }
+  bjh: { source: http://os.ott.henancatv.com/live/BJH/BJH.m3u8, sourceOnDemand: no }
+  bxtj: { source: http://iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226444/index.m3u8, sourceOnDemand: no }
+  c1h: { source: http://os.ott.henancatv.com/live/C1H/C1H.m3u8, sourceOnDemand: no }
+  c2h: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/C2H/C2H.m3u8, sourceOnDemand: no }
+  c3h: { source: http://os.ott.henancatv.com/live/C3H/C3H.m3u8, sourceOnDemand: no }
+  c4h: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/C4H/C4H.m3u8, sourceOnDemand: no }
+  c5c: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/C5C/C5C.m3u8, sourceOnDemand: no }
+  c5h: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/C5H/C5H.m3u8, sourceOnDemand: no }
+  c6h: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/C6H/C6H.m3u8, sourceOnDemand: no }
+  c7h: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/C7H/C7H.m3u8, sourceOnDemand: no }
+  c8h: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/C8H/C8H.m3u8, sourceOnDemand: no }
+  c9h: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/C9H/C9H.m3u8, sourceOnDemand: no }
+  ce1: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/CE1/CE1.m3u8, sourceOnDemand: no }
+  cgtn: { source: http://iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226476/index.m3u8, sourceOnDemand: no }
+  ch1: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/CH1/CH1.m3u8, sourceOnDemand: no }
+  ch2: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/CH2/CH2.m3u8, sourceOnDemand: no }
+  ch3: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/CH3/CH3.m3u8, sourceOnDemand: no }
+  chd: { source: http://iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226326/index.m3u8, sourceOnDemand: no }
+  ckh: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/CKH/CKH.m3u8, sourceOnDemand: no }
+  cny: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/CNY/CNY.m3u8, sourceOnDemand: no }
+  cqw: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/CQW/CQW.m3u8, sourceOnDemand: no }
+  csh: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/CSH/CSH.m3u8, sourceOnDemand: no }
+  cvf: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/CVF/CVF.m3u8, sourceOnDemand: no }
+  cvm: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/CVM/CVM.m3u8, sourceOnDemand: no }
+  cvn: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/CVN/CVN.m3u8, sourceOnDemand: no }
+  cvx: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/CVX/CVX.m3u8, sourceOnDemand: no }
+  cwd: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/CWD/CWD.m3u8, sourceOnDemand: no }
+  dfh: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/DFH/DFH.m3u8, sourceOnDemand: no }
+  dnw: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/DNW/DNW.m3u8, sourceOnDemand: no }
+  fh1: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/FH1/FH1.m3u8, sourceOnDemand: no }
+  fh2: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/FH2/FH2.m3u8, sourceOnDemand: no }
+  gdh: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/GDH/GDH.m3u8, sourceOnDemand: no }
+  gsw: { source: http://os.ott.henancatv.com/live/GSW/GSW.m3u8, sourceOnDemand: no }
+  gxp: { source: http://iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226493/index.m3u8, sourceOnDemand: no }
+  gxw: { source: http://os.ott.henancatv.com/live/GXW/GXW.m3u8, sourceOnDemand: no }
+  gzw: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/GZW/GZW.m3u8, sourceOnDemand: no }
+  hb1: { source: http://os.ott.henancatv.com/live/HB1/HB1.m3u8, sourceOnDemand: no }
+  hbh: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/HBH/HBH.m3u8, sourceOnDemand: no }
+  hbt: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/HBT/HBT.m3u8, sourceOnDemand: no }
+  hhx: { source: http://iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226410/index.m3u8, sourceOnDemand: no }
+  hlh: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/HLH/HLH.m3u8, sourceOnDemand: no }
+  hn2: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/HN2/HN2.m3u8, sourceOnDemand: no }
+  hn3: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/HN3/HN3.m3u8, sourceOnDemand: no }
+  hn4: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/HN4/HN4.m3u8, sourceOnDemand: no }
+  hn5: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/HN5/HN5.m3u8, sourceOnDemand: no }
+  hn6: { source: http://os.ott.henancatv.com/live/HN6/HN6.m3u8, sourceOnDemand: no }
+  hn8: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/HN8/HN8.m3u8, sourceOnDemand: no }
+  hn9: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/HN9/HN9.m3u8, sourceOnDemand: no }
+  hngj: { source: http://iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226434/index.m3u8, sourceOnDemand: no }
+  hnh: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/HNH/HNH.m3u8, sourceOnDemand: no }
+  hwh: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/HWH/HWH.m3u8, sourceOnDemand: no }
+  hx4k: { source: http://iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226323/index.m3u8, sourceOnDemand: no }
+  jbty: { source: http://os.ott.henancatv.com/live/JBTY/JBTY.m3u8, sourceOnDemand: no }
+  jjk: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/JJK/JJK.m3u8, sourceOnDemand: no }
+  jlh: { source: http://os.ott.henancatv.com/live/JLH/JLH.m3u8, sourceOnDemand: no }
+  jsh: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/JSH/JSH.m3u8, sourceOnDemand: no }
+  jsp: { source: http://iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226332/index.m3u8, sourceOnDemand: no }
+  jsqc: { source: http://iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226337/index.m3u8, sourceOnDemand: no }
+  jxw: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/JXW/JXW.m3u8, sourceOnDemand: no }
+  jy1: { source: http://os.ott.henancatv.com/live/JY1/JY1.m3u8, sourceOnDemand: no }
+  jyk: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/JYK/JYK.m3u8, sourceOnDemand: no }
+  jz1: { source: http://os.ott.henancatv.com/live/JZ1/JZ1.m3u8, sourceOnDemand: no }
+  kf1: { source: http://os.ott.henancatv.com/live/KF1/KF1.m3u8, sourceOnDemand: no }
+  kkd: { source: http://os.ott.henancatv.com/live/KKD/KKD.m3u8, sourceOnDemand: no }
+  lh1: { source: http://os.ott.henancatv.com/live/LH1/LH1.m3u8, sourceOnDemand: no }
+  lnh: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/LNH/LNH.m3u8, sourceOnDemand: no }
+  ly1: { source: http://os.ott.henancatv.com/live/LY1/LY1.m3u8, sourceOnDemand: no }
+  lyd: { source: http://os.ott.henancatv.com/live/LYD/LYD.m3u8, sourceOnDemand: no }
+  nmw: { source: http://os.ott.henancatv.com/live/NMW/NMW.m3u8, sourceOnDemand: no }
+  nxw: { source: http://os.ott.henancatv.com/live/NXW/NXW.m3u8, sourceOnDemand: no }
+  ny1: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/NY1/NY1.m3u8, sourceOnDemand: no }
+  pd1: { source: http://os.ott.henancatv.com/live/PD1/PD1.m3u8, sourceOnDemand: no }
+  py1: { source: http://os.ott.henancatv.com/live/PY1/PY1.m3u8, sourceOnDemand: no }
+  qhw: { source: http://os.ott.henancatv.com/live/QHW/QHW.m3u8, sourceOnDemand: no }
+  qjshd: { source: http://os.ott.henancatv.com/live/QJSHD/QJSHD.m3u8, sourceOnDemand: no }
+  scw: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/SCW/SCW.m3u8, sourceOnDemand: no }
+  sde: { source: http://os.ott.henancatv.com/live/SDE/SDE.m3u8, sourceOnDemand: no }
+  sdh: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/SDH/SDH.m3u8, sourceOnDemand: no }
+  shdy: { source: http://iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226718/index.m3u8, sourceOnDemand: no }
+  sm1: { source: http://os.ott.henancatv.com/live/SM1/SM1.m3u8, sourceOnDemand: no }
+  sq1: { source: http://os.ott.henancatv.com/live/SQ1/SQ1.m3u8, sourceOnDemand: no }
+  sxt: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/SXT/SXT.m3u8, sourceOnDemand: no }
+  sxw: { source: http://os.ott.henancatv.com/live/SXW/SXW.m3u8, sourceOnDemand: no }
+  szh: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/SZH/SZH.m3u8, sourceOnDemand: no }
+  tea: { source: http://iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226329/index.m3u8, sourceOnDemand: no }
+  tjh: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/TJH/TJH.m3u8, sourceOnDemand: no }
+  wbp: { source: http://iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226446/index.m3u8, sourceOnDemand: no }
+  wsp: { source: http://iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226440/index.m3u8, sourceOnDemand: no }
+  xc1: { source: http://os.ott.henancatv.com/live/XC1/XC1.m3u8, sourceOnDemand: no }
+  xjb: { source: http://os.ott.henancatv.com/live/XJB/XJB.m3u8, sourceOnDemand: no }
+  xjw: { source: http://os.ott.henancatv.com/live/XJW/XJW.m3u8, sourceOnDemand: no }
+  xx1: { source: http://os.ott.henancatv.com/live/XX1/XX1.m3u8, sourceOnDemand: no }
+  xy1: { source: http://os.ott.henancatv.com/live/XY1/XY1.m3u8, sourceOnDemand: no }
+  xzw: { source: http://os.ott.henancatv.com/live/XZW/XZW.m3u8, sourceOnDemand: no }
+  ydx: { source: http://iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226436/index.m3u8, sourceOnDemand: no }
+  ymk: { source: http://iptv.cdn.ha.chinamobile.com/PLTV/88888888/224/3221226406/index.m3u8, sourceOnDemand: no }
+  ynw: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/YNW/YNW.m3u8, sourceOnDemand: no }
+  yxfyhd: { source: http://os.ott.henancatv.com/live/YXFYHD/YXFYHD.m3u8, sourceOnDemand: no }
+  zjh: { source: http://172.16.52.5/avitsr_os.ott.henancatv.com/live/ZJH/ZJH.m3u8, sourceOnDemand: no }
+  zk1: { source: http://os.ott.henancatv.com/live/ZK1/ZK1.m3u8, sourceOnDemand: no }
+  zm1: { source: http://os.ott.henancatv.com/live/ZM1/ZM1.m3u8, sourceOnDemand: no }
+  zyq: { source: http://os.ott.henancatv.com/live/ZYQ/ZYQ.m3u8, sourceOnDemand: no }
+  zz1hd: { source: http://os.ott.henancatv.com/live/ZZ1HD/ZZ1HD.m3u8, sourceOnDemand: no }

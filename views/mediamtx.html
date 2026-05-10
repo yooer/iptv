@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediaMTX 远程管理 - IPTV 调度中心</title>
+    <link rel="icon" href="/static/img/logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/all.min.css">
+    <script src="/static/js/sweetalert2.all.min.js"></script>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f5f7FA;
+            color: #333;
+        }
+
+        /* === NAV === */
+        .navbar {
+            background: #fff;
+            border-bottom: 1px solid #f1f5f9;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .navbar-inner {
+            max-width: 1152px;
+            margin: 0 auto;
+            padding: 0 24px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .brand img {
+            width: 32px;
+            height: 32px;
+            object-fit: contain;
+        }
+
+        .brand-name {
+            font-weight: 700;
+            font-size: 18px;
+            color: #1e293b;
+            letter-spacing: -0.02em;
+        }
+
+        .nav-links {
+            display: flex;
+            height: 64px;
+        }
+
+        .nav-link {
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 500;
+            color: #94a3b8;
+            text-decoration: none;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            color: #10B981;
+        }
+
+        .nav-link.active {
+            color: #10B981;
+            border-bottom-color: #10B981;
+            font-weight: 700;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .btn-logout {
+            background: none;
+            border: none;
+            color: #cbd5e1;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-logout:hover {
+            color: #f87171;
+        }
+
+        .container {
+            max-width: 1152px;
+            margin: 0 auto;
+            padding: 32px 24px 80px;
+        }
+
+        /* === STATS === */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+
+        .stat-icon.green {
+            background: #f0fdf4;
+            color: #10B981;
+        }
+
+        .stat-icon.blue {
+            background: #eff6ff;
+            color: #3b82f6;
+        }
+
+        .stat-icon.orange {
+            background: #fff7ed;
+            color: #f97316;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        .page-header {
+            margin-bottom: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .page-header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .page-header p {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 6px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+            border: 1px solid #f1f5f9;
+            overflow: hidden;
+            margin-bottom: 32px;
+        }
+
+        .card-header {
+            padding: 16px 24px;
+            background: #f8fafc;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .card-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 13px;
+            flex-shrink: 0;
+        }
+
+        .card-icon.green {
+            background-color: #10B981;
+        }
+
+        .card-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: #1e293b;
+        }
+
+        /* === TABLE === */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead th {
+            padding: 12px 24px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            background: rgba(248, 250, 252, 0.5);
+            text-align: left;
+        }
+
+        tbody tr {
+            border-top: 1px solid #f8fafc;
+            transition: background 0.15s;
+        }
+
+        tbody tr:hover {
+            background: rgba(248, 250, 252, 0.5);
+        }
+
+        tbody td {
+            padding: 16px 24px;
+            font-size: 14px;
+            color: #475569;
+        }
+
+        .node-name {
+            font-weight: 700;
+            color: #1e293b;
+            display: block;
+        }
+
+        .node-ip {
+            font-size: 12px;
+            color: #94a3b8;
+            font-family: monospace;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge.badge-gray {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        /* 轻量化徽章样式 */
+        .bg-light-success {
+            background-color: #e6f7ef;
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .bg-light-danger {
+            background-color: #fef2f2;
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .bg-light-primary {
+            background-color: #eff6ff;
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+        }
+
+        .bg-light-warning {
+            background-color: #fffbeb;
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+
+        .bg-light-info {
+            background-color: #f0f9ff;
+            color: #06b6d4;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+        }
+
+        .bg-light-secondary {
+            background-color: #f8fafc;
+            color: #64748b;
+            border: 1px solid rgba(100, 116, 139, 0.2);
+        }
+
+        .bg-light-light {
+            background-color: #ffffff;
+            color: #cbd5e1;
+            border: 1px solid #f1f5f9;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            line-height: 1;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-add {
+            background: #10B981;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-add:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+
+        .btn-action {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid #f1f5f9;
+            background: #fff;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            border-color: #10B981;
+            color: #10B981;
+            background: #f0fdf4;
+        }
+
+        .btn-action:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            background: #f1f5f9 !important;
+            border-color: #e2e8f0 !important;
+            color: #94a3b8 !important;
+        }
+
+        .btn-action.del:hover:not(:disabled) {
+            border-color: #f87171;
+            color: #f87171;
+            background: #fef2f2;
+        }
+
+        .btn-action.blue:hover:not(:disabled) {
+            border-color: #3b82f6;
+            color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        /* Modal Form */
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .input-field:focus {
+            border-color: #10B981;
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .terminal-box {
+            background: #1e293b;
+            color: #38bdf8;
+            font-family: 'Consolas', monospace;
+            padding: 20px;
+            border-radius: 12px;
+            height: 400px;
+            overflow-y: auto;
+            text-align: left;
+            font-size: 13px;
+            line-height: 1.5;
+            border: 1px solid #334155;
+        }
+
+        .pc-badge {
+            margin-right: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            font-size: 10px;
+            line-height: 1;
+            background: #3b82f6;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <div style="display:flex; align-items:center; gap:40px;">
+                <div class="brand">
+                    <img src="/static/img/logo.png" alt="Logo">
+                    <span class="brand-name">IPTV 调度管理中心</span>
+                </div>
+                {{NAVBAR}}
+            </div>
+            <div class="nav-right">
+                <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="fa-solid fa-server"></i></div>
+                <div>
+                    <div id="stat_online" class="stat-value">0 / 0</div>
+                    <div class="stat-label">在线节点</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="fa-solid fa-route"></i></div>
+                <div style="flex-grow:1;">
+                    <div id="stat_paths" class="stat-value">0</div>
+                    <div class="stat-label" style="display:flex; justify-content:space-between; align-items:center;">
+                        <span>总直播流</span>
+                        <span style="text-transform:none; font-size:11px;">
+                            <span class="text-success" id="stat_ready_paths" style="color:#10b981; font-weight:700;">0</span> 在线 / 
+                            <span class="text-danger" id="stat_fail_paths" style="color:#ef4444; font-weight:700;">0</span> 离线
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon orange"><i class="fa-solid fa-users"></i></div>
+                <div>
+                    <div id="stat_readers" class="stat-value">0</div>
+                    <div class="stat-label">在线用户</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="page-header">
+            <div>
+                <h1>MediaMTX 远程集群</h1>
+                <p>集中化管理分布式流媒体服务器，支持自动化安装与频道调度</p>
+            </div>
+            <button class="btn-add" onclick="showNodeModal()">
+                <i class="fa-solid fa-plus"></i> 添加新节点
+            </button>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-header-left">
+                    <div class="card-icon green"><i class="fa-solid fa-list-check"></i></div>
+                    <div class="card-title">节点管理列表</div>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>节点基本信息</th>
+                        <th>运行状态</th>
+                        <th>频道配置 (API)</th>
+                        <th>频道状态</th>
+                        <th>系统版本</th>
+                        <th>运行时间</th>
+                        <th style="width:200px; text-align:center;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="nodes_grid">
+                    <!-- Dynamic Nodes -->
+                </tbody>
+            </table>
+        </div>
+
+        <footer
+            style="text-align: center; padding: 40px 0 60px; color: #cbd5e1; font-size: 11px; font-weight: 500; letter-spacing: 0.05em;">
+            &copy; 2026 IPTV 调度管理中心 · <span style="color: #94a3b8;">{{VERSION}}</span>
+        </footer>
+    </div>
+
+    <script>
+        let nodes = [];
+
+        async function loadNodes() {
+            try {
+                const res = await fetch('/dash/biz/mtx-nodes');
+                const data = await res.json();
+                nodes = Array.isArray(data) ? data : [];
+                renderNodes();
+                updateGlobalStats();
+            } catch (e) {
+                console.error(e);
+                nodes = [];
+                renderNodes();
+            }
+        }
+
+        async function updateGlobalStats() {
+            if (!Array.isArray(nodes)) return;
+            let onlineNodes = 0, totalPaths = 0, totalReadyPaths = 0, totalReaders = 0;
+
+            const tasks = nodes.map(async (n) => {
+                const id = n.ip.replace(/\./g, '_');
+                if (n.status !== 2) {
+                    const vEl = document.getElementById(`node_ver_${id}`);
+                    const uEl = document.getElementById(`node_upt_${id}`);
+                    const badge = document.getElementById(`node_paths_${id}`);
+                    const healthEl = document.getElementById(`node_health_${id}`);
+                    if (vEl) vEl.innerHTML = `<span class="status-badge bg-light-light" style="font-size:11px;">-</span>`;
+                    if (uEl) uEl.innerHTML = `<span class="status-badge bg-light-light" style="font-size:11px;">-</span>`;
+                    if (badge) badge.innerText = '0';
+                    if (healthEl) healthEl.innerHTML = `<span style="color:#94a3b8; font-size:10px;">未就绪</span>`;
+                    return;
+                }
+                onlineNodes++;
+
+                try {
+                    fetch(`/dash/biz/mtx-proxy/${n.ip}/info`).then(r => r.json()).then(info => {
+                        const vEl = document.getElementById(`node_ver_${id}`);
+                        const uEl = document.getElementById(`node_upt_${id}`);
+                        if (vEl && info.version) vEl.innerHTML = `<span class="status-badge bg-light-info" style="font-family:monospace; font-size:11px;">${info.version}</span>`;
+                        if (uEl && info.started) uEl.innerHTML = `<span class="status-badge bg-light-secondary" style="font-weight:500; font-size:11px;"><i class="fa-regular fa-clock mr-1"></i>${formatUptime(info.started)}</span>`;
+                    }).catch(() => {
+                        const vEl = document.getElementById(`node_ver_${id}`);
+                        if (vEl) vEl.innerHTML = `<span class="status-badge bg-light-danger" style="font-size:10px;">超时</span>`;
+                    });
+
+                    const res = await fetch(`/dash/biz/mtx-proxy/${n.ip}/paths/list?itemsPerPage=9999`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const items = data.items || data.list || [];
+                        let nodeReaders = 0, nodeReadyCount = 0;
+                        items.forEach(p => {
+                            nodeReaders += (p.readers ? p.readers.length : 0);
+                            if (p.sourceReady || p.ready || p.available) nodeReadyCount++;
+                        });
+                        totalPaths += items.length; totalReadyPaths += nodeReadyCount; totalReaders += nodeReaders;
+                        const badge = document.getElementById(`node_paths_${id}`);
+                        if (badge) badge.innerText = items.length;
+                        const healthEl = document.getElementById(`node_health_${id}`);
+                        if (healthEl) {
+                            const failCount = items.length - nodeReadyCount;
+                            healthEl.innerHTML = `
+                                <span class="status-badge bg-light-success" title="正常"><i class="fa-solid fa-check-circle mr-1"></i> ${nodeReadyCount}</span>
+                                ${failCount > 0 ? `<span class="status-badge bg-light-danger" title="异常"><i class="fa-solid fa-triangle-exclamation mr-1"></i> ${failCount}</span>` : ''}
+                            `;
+                        }
+                    }
+                } catch (e) {}
+            });
+            await Promise.all(tasks);
+            document.getElementById('stat_online').innerText = `${onlineNodes} / ${nodes.length}`;
+            document.getElementById('stat_paths').innerText = totalPaths;
+            document.getElementById('stat_ready_paths').innerText = totalReadyPaths;
+            document.getElementById('stat_fail_paths').innerText = totalPaths - totalReadyPaths;
+            document.getElementById('stat_readers').innerText = totalReaders;
+        }
+
+        function formatUptime(startedStr) {
+            const start = new Date(startedStr);
+            const diff = Math.floor((new Date() - start) / 1000);
+            const d = Math.floor(diff / 86400), h = Math.floor((diff % 86400) / 3600), m = Math.floor((diff % 3600) / 60);
+            let res = [];
+            if (d > 0) res.push(`${d}天`);
+            if (h > 0 || d > 0) res.push(`${h}时`);
+            res.push(`${m}分`);
+            return res.join('');
+        }
+
+        function renderNodes() {
+            const grid = document.getElementById('nodes_grid');
+            if (!Array.isArray(nodes) || nodes.length === 0) {
+                grid.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:80px; color:#94a3b8;">暂无节点数据</td></tr>`;
+                return;
+            }
+            grid.innerHTML = nodes.map(n => {
+                const statusMap = { 0: '<span class="badge badge-gray">未安装</span>', 1: '<span class="badge badge-orange"><i class="fas fa-spinner fa-spin mr-1"></i> 安装中</span>', 2: '<span class="badge badge-green">运行中</span>', 3: '<span class="badge badge-red">异常</span>' };
+                const isRunning = n.status === 2, id = n.ip.replace(/\./g, '_');
+                return `
+                    <tr>
+                        <td><span class="node-name">${n.name}</span><span class="node-ip">${n.ip}</span></td>
+                        <td>${statusMap[n.status]}</td>
+                        <td><div style="display:flex; align-items:center;"><span class="pc-badge" id="node_paths_${id}">0</span><button onclick="showPaths('${n.ip}')" class="p-1 text-blue-500 hover:underline text-xs" style="background:none; border:none; cursor:pointer; font-weight:600; color:#3b82f6;" ${!isRunning ? 'disabled style="opacity:0.3;"' : ''}>管理</button></div></td>
+                        <td><div id="node_health_${id}" style="display:flex; gap:4px;"><span style="color:#94a3b8; font-size:10px;">-</span></div></td>
+                        <td><div id="node_ver_${id}"><span class="status-badge bg-light-light" style="font-size:11px;">-</span></div></td>
+                        <td><div id="node_upt_${id}"><span class="status-badge bg-light-light" style="font-size:11px;">-</span></div></td>
+                        <td style="text-align:center;">
+                            <div style="display:flex; gap:6px; justify-content:center;">
+                                <button class="btn-action blue" onclick="installNode('${n.ip}')" title="部署服务" ${isRunning ? 'disabled' : ''}><i class="fa-solid fa-download"></i></button>
+                                <button class="btn-action green" onclick="editGlobalConfig('${n.ip}')" title="全局设置" ${!isRunning ? 'disabled' : ''}><i class="fa-solid fa-sliders"></i></button>
+                                <button class="btn-action blue" onclick="showConnections('${n.ip}')" title="实时监控" ${!isRunning ? 'disabled' : ''}><i class="fa-solid fa-chart-line"></i></button>
+                                <button class="btn-action orange" onclick="controlNode('${n.ip}', 'restart')" title="重启服务" ${!isRunning ? 'disabled' : ''}><i class="fa-solid fa-rotate"></i></button>
+                                <button class="btn-action" onclick="showNodeModal('${n.ip}')" title="节点配置"><i class="fa-solid fa-cog"></i></button>
+                                <button class="btn-action del" onclick="controlNode('${n.ip}', 'uninstall')" title="彻底卸载" ${!isRunning ? 'disabled' : ''}><i class="fa-solid fa-eraser"></i></button>
+                                <button class="btn-action del" onclick="deleteNode('${n.ip}')" title="移除节点"><i class="fa-solid fa-trash-can"></i></button>
+                            </div>
+                        </td>
+                    </tr>`;
+            }).join('');
+        }
+
+        async function showPaths(ip) {
+            Swal.fire({ title: '正在拉取...', didOpen: () => Swal.showLoading() });
+            try {
+                const [pathsResp, muxersResp, sessionsResp] = await Promise.all([
+                    fetch(`/dash/biz/mtx-proxy/${ip}/paths/list?itemsPerPage=9999`), fetch(`/dash/biz/mtx-proxy/${ip}/hlsmuxers/list`), fetch(`/dash/biz/mtx-proxy/${ip}/hlssessions/list`)
+                ]);
+                const pathsData = await pathsResp.json(), muxersData = await muxersResp.json(), sessionsData = await sessionsResp.json();
+                let allItems = pathsData.items || [];
+                allItems.sort((a, b) => (a.ready === b.ready ? 0 : a.ready ? 1 : -1));
+                const muxers = muxersData.items || [], sessions = sessionsData.items || [], node = nodes.find(n => n.ip === ip) || {}, hlsPort = node.hls_port || '8888';
+
+                const renderPathTable = (items) => {
+                    return `
+                <div style="max-height: 480px; overflow-y: auto; border: 1px solid #f1f5f9; border-radius: 8px;">
+                    <table style="width:100%; border-collapse:collapse;">
+                        <thead style="position: sticky; top: 0; background: #f8fafc; border-bottom: 2px solid #e2e8f0; z-index:10;">
+                            <tr>
+                                <th style="padding:12px 15px; text-align:left;">频道名称</th>
+                                <th style="width:100px; text-align:center;">状态</th>
+                                <th style="width:120px; text-align:center;">HLS</th>
+                                <th style="width:80px; text-align:center;">在线</th>
+                                <th style="width:180px; text-align:center;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${items.map(p => {
+                                const hlsUrl = `http://${ip}:${hlsPort}/${p.name}/index.m3u8`, hasMuxer = muxers.some(m => m.path === p.name), pathSessions = sessions.filter(s => s.path === p.name).length;
+                                return `<tr style="border-bottom:1px solid #f8fafc; ${!p.ready ? 'background: #fffafa;' : ''}">
+                                    <td style="padding:12px 15px; text-align:left;"><b style="color:${!p.ready ? '#ef4444' : '#1e293b'}; font-size:13px;">${p.name}</b></td>
+                                    <td style="text-align:center;"><span class="status-badge ${p.ready ? 'bg-light-success' : 'bg-light-danger'}" style="font-size:10px;">${p.ready ? '在线' : '离线'}</span></td>
+                                    <td style="text-align:center;"><span class="status-badge ${hasMuxer ? 'bg-light-primary' : 'bg-light-info'}" style="font-size:10px;">${hasMuxer ? '切片中' : '未开启'}</span></td>
+                                    <td style="text-align:center; font-weight:700; color:#3b82f6; font-size:12px;">${pathSessions}</td>
+                                    <td style="text-align:center;"><div style="display:flex; gap:6px; justify-content:center;">
+                                            <button onclick="playStream('${p.name}', '${hlsUrl}')" class="btn-action blue" title="预览"><i class="fa-solid fa-play"></i></button>
+                                            <button onclick="editSource('${ip}', '${p.name}')" class="btn-action blue" title="修改"><i class="fa-solid fa-pen-to-square"></i></button>
+                                            <button onclick="copyToClipboard('${hlsUrl}')" class="btn-action" title="链接"><i class="fa-solid fa-link"></i></button>
+                                            <button onclick="deletePath('${ip}', '${p.name}')" class="btn-action del" title="删除"><i class="fa-solid fa-trash"></i></button>
+                                    </div></td></tr>`;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>`;
+                };
+
+                Swal.fire({
+                    title: `频道调度中心 - ${ip}`, width: '950px',
+                    html: `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; gap:12px;">
+                            <button onclick="addPath('${ip}')" class="btn-add" style="padding:8px 16px; white-space:nowrap; flex-shrink:0;"><i class="fa-solid fa-plus"></i> 新增频道</button>
+                            <div style="flex-grow:1; display:flex; align-items:center; gap:10px; background:#f8fafc; padding:4px 12px; border-radius:8px; border:1px solid #e2e8f0;">
+                                <i class="fa-solid fa-search" style="color:#94a3b8; font-size:13px;"></i>
+                                <input id="path_search" class="input-field" placeholder="搜索频道..." style="border:none; background:transparent; padding:4px 0; height:32px;">
+                                <div style="width:1px; height:16px; background:#e2e8f0;"></div>
+                                <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-size:12px; color:#64748b; font-weight:600; white-space:nowrap;"><input type="checkbox" id="only_offline"> 仅看离线</label>
+                            </div>
+                        </div>
+                        <div id="path_table_container">${renderPathTable(allItems)}</div>
+                        <div id="player_container" style="margin-top:20px; display:none;"><div id="dplayer" style="border-radius:12px; overflow:hidden;"></div></div>`,
+                    showConfirmButton: false,
+                    didOpen: () => {
+                        const search = document.getElementById('path_search'), offlineToggle = document.getElementById('only_offline'), update = () => {
+                            const val = search.value.toLowerCase(), isOnlyOffline = offlineToggle.checked;
+                            const filtered = allItems.filter(p => p.name.toLowerCase().includes(val) && (!isOnlyOffline || !p.ready));
+                            document.getElementById('path_table_container').innerHTML = renderPathTable(filtered);
+                        };
+                        search.oninput = update; offlineToggle.onchange = update;
+                    }
+                });
+            } catch (e) { Swal.fire('加载失败', '', 'error'); }
+        }
+
+        async function showConnections(ip) {
+            Swal.fire({ title: '正在拉取实时连接...', didOpen: () => Swal.showLoading() });
+            try {
+                const endpoints = ['hlssessions'], labels = ['HLS'];
+                let allConns = [];
+                await Promise.all(endpoints.map(async (ep, idx) => {
+                    try {
+                        const res = await fetch(`/dash/biz/mtx-proxy/${ip}/${ep}/list`);
+                        if (res.ok) {
+                            const data = await res.json();
+                            (data.items || data.list || []).forEach(item => {
+                                allConns.push({ ...item, _type: labels[idx], _ep: ep, id: item.id || 'N/A', path: item.path || item.name || '-', addr: item.remoteAddr || '-' });
+                            });
+                        }
+                    } catch (err) {}
+                }));
+                Swal.fire({
+                    title: `实时连接监视器 - ${ip}`, width: '900px',
+                    html: `
+                        <div style="max-height: 400px; overflow-y: auto; border: 1px solid #f1f5f9; border-radius: 8px;">
+                            <table style="width:100%; border-collapse:collapse;">
+                                <thead style="position: sticky; top: 0; background: #f8fafc; border-bottom: 2px solid #e2e8f0; z-index:10;">
+                                    <tr>
+                                        <th style="padding:12px 15px; font-size:11px; text-align:center;">协议</th>
+                                        <th style="padding:12px 15px; font-size:11px; text-align:left;">访问频道</th>
+                                        <th style="padding:12px 15px; font-size:11px; text-align:left;">访客 IP</th>
+                                        <th style="padding:12px 15px; font-size:11px; width:80px; text-align:center;">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${allConns.map(c => `
+                                        <tr style="border-bottom:1px solid #f1f5f9;">
+                                            <td style="padding:12px 15px; text-align:center;"><span class="badge badge-gray">${c._type}</span></td>
+                                            <td style="padding:12px 15px; text-align:left; font-weight:700;">${c.path}</td>
+                                            <td style="padding:12px 15px; text-align:left; font-family:monospace; font-size:12px; color:#64748b;">${c.addr}</td>
+                                            <td style="padding:12px 15px; text-align:center;">
+                                                <button onclick="kickSession('${ip}', '${c._ep}', '${c.id}')" class="btn-action del" title="断开连接"><i class="fa-solid fa-xmark"></i></button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                    ${allConns.length === 0 ? '<tr><td colspan="4" style="text-align:center; padding:40px; color:#94a3b8;">无活跃连接</td></tr>' : ''}
+                                </tbody>
+                            </table>
+                        </div>`,
+                    showConfirmButton: false
+                });
+            } catch (e) { Swal.fire('加载失败', '', 'error'); }
+        }
+
+        async function kickSession(ip, ep, id) {
+            const r = await Swal.fire({ title: '确认切断该访客连接？', icon: 'warning', showCancelButton: true });
+            if (r.isConfirmed) {
+                const res = await fetch(`/dash/biz/mtx-proxy/${ip}/${ep}/kick/${id}`, { method: 'POST' });
+                if (res.ok) { Swal.fire('已强制断开', '', 'success'); showConnections(ip); }
+            }
+        }
+
+        async function editGlobalConfig(ip) {
+            Swal.fire({ title: '拉取配置中...', didOpen: () => Swal.showLoading() });
+            try {
+                const res = await fetch(`/dash/biz/mtx-proxy/${ip}/config/global/get`), config = await res.json();
+                const MTX_PARAMS = { 'logLevel': '日志级别', 'readTimeout': '读取超时', 'writeTimeout': '写入超时', 'apiAddress': 'API 地址', 'rtspAddress': 'RTSP 地址', 'rtmpAddress': 'RTMP 地址', 'hlsAddress': 'HLS 地址', 'webrtcAddress': 'WebRTC 地址', 'srtAddress': 'SRT 地址' };
+                Swal.fire({
+                    title: `全局配置热更新 - ${ip}`, width: '600px',
+                    html: `<div style="text-align:left; display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+                                ${Object.keys(MTX_PARAMS).map(key => `<div class="form-group"><label class="form-label">${MTX_PARAMS[key]}</label><input id="g_${key}" class="input-field" value="${config[key] || ''}"></div>`).join('')}
+                           </div>`,
+                    showCancelButton: true, confirmButtonText: '保存修改',
+                    preConfirm: () => { let newCfg = {}; Object.keys(MTX_PARAMS).forEach(key => { newCfg[key] = document.getElementById(`g_${key}`).value; }); return newCfg; }
+                }).then(async (result) => {
+                    if (result.isConfirmed) {
+                        const patchRes = await fetch(`/dash/biz/mtx-proxy/${ip}/config/global/patch`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(result.value) });
+                        if (patchRes.ok) Swal.fire('保存成功', '配置已实时热更新', 'success'); else Swal.fire('保存失败', '', 'error');
+                    }
+                });
+            } catch (e) { Swal.fire('加载失败', '', 'error'); }
+        }
+
+        function generateRandomString(length) {
+            const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            let res = '';
+            for (let i = 0; i < length; i++) res += chars.charAt(Math.floor(Math.random() * chars.length));
+            return res;
+        }
+
+        async function showNodeModal(ip = '') {
+            const isNew = ip === '';
+            const node = !isNew ? nodes.find(n => n.ip === ip) : { 
+                name: '', ip: '', ssh_user: 'root', ssh_pass: '', ssh_port: '22', 
+                hls_port: '8888', api_port: '9997', rtsp_port: '8554', metrics_port: '9998',
+                api_user: generateRandomString(8), api_pass: generateRandomString(12)
+            };
+            const { value: formValues } = await Swal.fire({
+                title: isNew ? '添加节点' : '节点设置', width: '600px',
+                html: `<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align:left;">
+                        <div class="form-group"><label class="form-label">节点名称</label><input id="n_name" class="input-field" value="${node.name}"></div>
+                        <div class="form-group"><label class="form-label">节点 IP</label><input id="n_ip" class="input-field" value="${node.ip}" ${ip ? 'disabled' : ''}></div>
+                        <div class="form-group"><label class="form-label">SSH 用户</label><input id="n_user" class="input-field" value="${node.ssh_user}"></div>
+                        <div class="form-group"><label class="form-label">SSH 密码</label><input id="n_pass" type="password" class="input-field" value="${node.ssh_pass || ''}"></div>
+                        <div class="form-group"><label class="form-label">SSH 端口</label><input id="n_port" class="input-field" value="${node.ssh_port}"></div>
+                        <div class="form-group"><label class="form-label">HLS 端口</label><input id="n_hls" class="input-field" value="${node.hls_port}"></div>
+                        <div class="form-group"><label class="form-label">API 端口</label><input id="n_api_port" class="input-field" value="${node.api_port}"></div>
+                        <div class="form-group"><label class="form-label">RTSP 端口</label><input id="n_rtsp_port" class="input-field" value="${node.rtsp_port}"></div>
+                        <div class="form-group"><label class="form-label">监控端口</label><input id="n_metrics_port" class="input-field" value="${node.metrics_port}"></div>
+                        <div class="form-group"><label class="form-label">API 用户</label><input id="n_api_user" class="input-field" value="${node.api_user}"></div>
+                        <div class="form-group" style="grid-column: span 2;"><label class="form-label">API 密码</label><input id="n_api_pass" class="input-field" value="${node.api_pass}"></div>
+                    </div>`,
+                showCancelButton: true, confirmButtonText: '保存配置', preConfirm: () => ({ name: document.getElementById('n_name').value, ip: document.getElementById('n_ip').value, ssh_user: document.getElementById('n_user').value, ssh_pass: document.getElementById('n_pass').value, ssh_port: String(document.getElementById('n_port').value), hls_port: String(document.getElementById('n_hls').value), api_port: String(document.getElementById('n_api_port').value), rtsp_port: String(document.getElementById('n_rtsp_port').value), metrics_port: String(document.getElementById('n_metrics_port').value), api_user: document.getElementById('n_api_user').value, api_pass: document.getElementById('n_api_pass').value, status: node.status || 0 })
+            });
+            if (formValues) {
+                const res = await fetch('/dash/biz/mtx-nodes', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formValues) });
+                const result = await res.json();
+                if (result.status) { Swal.fire('保存成功', '', 'success'); loadNodes(); } else { Swal.fire('保存失败', result.msg, 'error'); }
+            }
+        }
+
+        async function controlNode(ip, action) {
+            const r = await Swal.fire({ title: `确认执行操作？`, icon: 'warning', showCancelButton: true });
+            if (r.isConfirmed) {
+                const res = await fetch(`/dash/biz/mtx-control?ip=${ip}&action=${action}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.status) { Swal.fire('执行成功', '', 'success'); loadNodes(); }
+            }
+        }
+
+        async function addPath(ip) {
+            const { value: form } = await Swal.fire({ title: '新增流', html: `<div style="text-align:left;"><label class="form-label">名称</label><input id="p_n" class="input-field"><label class="form-label" style="margin-top:15px;">源地址</label><textarea id="p_s" class="input-field" style="height:60px;"></textarea></div>`, preConfirm: () => [document.getElementById('p_n').value, document.getElementById('p_s').value] });
+            if (form && form[0] && form[1]) {
+                const [name, source] = form;
+                await fetch(`/dash/biz/mtx-proxy/${ip}/config/paths/add/${name}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ source }) });
+                showPaths(ip);
+            }
+        }
+
+        async function editSource(ip, name) {
+            const r = await fetch(`/dash/biz/mtx-proxy/${ip}/config/paths/get/${name}`), cfg = await r.json();
+            const { value: src } = await Swal.fire({ title: '修改源', input: 'textarea', inputValue: cfg.source, showCancelButton: true });
+            if (src !== undefined) {
+                await fetch(`/dash/biz/mtx-proxy/${ip}/config/paths/patch/${name}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ source: src }) });
+                showPaths(ip);
+            }
+        }
+
+        async function deletePath(ip, name) {
+            const r = await Swal.fire({ title: `确认删除频道 [${name}]？`, icon: 'warning', showCancelButton: true });
+            if (r.isConfirmed) {
+                await fetch(`/dash/biz/mtx-proxy/${ip}/config/paths/delete/${name}`, { method: 'DELETE' });
+                showPaths(ip);
+            }
+        }
+
+        async function installNode(ip) {
+            const res = await fetch(`/dash/biz/mtx-install?ip=${ip}`, { method: 'POST' }), data = await res.json();
+            if (data.status) {
+                Swal.fire({
+                    title: '开始安装', width: '800px', html: `<div id="install_term" class="terminal-box">正在连接...</div>`,
+                    didOpen: () => {
+                        const term = document.getElementById('install_term'), ev = new EventSource(`/dash/biz/mtx-install-logs?ip=${ip}`);
+                        ev.onmessage = (e) => { term.innerText += e.data; term.scrollTop = term.scrollHeight; };
+                        ev.onerror = () => { term.innerText += '\n安装结束\n'; ev.close(); loadNodes(); };
+                    }
+                });
+            }
+        }
+
+        async function deleteNode(ip) {
+            const r = await Swal.fire({ title: '确认移除此节点？', icon: 'warning', showCancelButton: true });
+            if (r.isConfirmed) { await fetch(`/dash/biz/mtx-nodes?ip=${ip}`, { method: 'DELETE' }); loadNodes(); }
+        }
+
+        let dpInstance = null;
+        function playStream(name, url) {
+            const initDP = (u) => {
+                const container = document.getElementById('player_container');
+                const playerEl = document.getElementById('dplayer');
+                if (!container || !playerEl) return;
+                
+                container.style.display = 'block';
+                if (dpInstance) dpInstance.destroy();
+                dpInstance = new DPlayer({ 
+                    container: playerEl, 
+                    live: true, 
+                    autoplay: true, 
+                    video: { url: u, type: 'hls' } 
+                });
+                container.scrollIntoView({ behavior: 'smooth' });
+            };
+
+            if (!window.DPlayer) {
+                const s = document.createElement('script'); 
+                s.src = 'https://cdn.bootcdn.net/ajax/libs/dplayer/1.27.0/DPlayer.min.js';
+                s.onload = () => {
+                    const h = document.createElement('script'); 
+                    h.src = 'https://cdn.bootcdn.net/ajax/libs/hls.js/1.4.10/hls.min.js';
+                    h.onload = () => initDP(url); 
+                    document.head.appendChild(h);
+                };
+                document.head.appendChild(s);
+            } else {
+                initDP(url);
+            }
+        }
+
+        function copyToClipboard(text) { navigator.clipboard.writeText(text); Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: '已复制', showConfirmButton: false, timer: 1000 }); }
+        function logout() { location.href = '/dash/logout'; }
+        document.addEventListener('DOMContentLoaded', loadNodes);
+        setInterval(loadNodes, 30000);
+    </script>
+</body>
+
+</html>

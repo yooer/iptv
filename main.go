@@ -40,11 +40,12 @@ const AppVersion = "26.05.10.104335"
 
 const NavbarTemplate = `
 <div class="nav-links">
-    <a href="/dash/api"    class="nav-link {{ACTIVE_API}}">接口代理</a>
-    <a href="/dash/m3u8"   class="nav-link {{ACTIVE_M3U8}}">直播调度</a>
-    <a href="/dash/menu"   class="nav-link {{ACTIVE_MENU}}">节目映射</a>
-    <a href="/dash/users"  class="nav-link {{ACTIVE_USERS}}">用户管理</a>
-    <a href="/dash/system" class="nav-link {{ACTIVE_SYSTEM}}">系统设置</a>
+    <a href="/dash/api"      class="nav-link {{ACTIVE_API}}">接口代理</a>
+    <a href="/dash/m3u8"     class="nav-link {{ACTIVE_M3U8}}">直播调度</a>
+    <a href="/dash/menu"     class="nav-link {{ACTIVE_MENU}}">节目映射</a>
+    <a href="/dash/mediamtx" class="nav-link {{ACTIVE_MEDIAMTX}}">节点管理</a>
+    <a href="/dash/users"    class="nav-link {{ACTIVE_USERS}}">用户管理</a>
+    <a href="/dash/system"   class="nav-link {{ACTIVE_SYSTEM}}">系统设置</a>
 </div>`
 
 //go:embed views/*.html
@@ -108,6 +109,7 @@ var (
 	apiColl    *mongo.Collection
 	m3u8Coll   *mongo.Collection
 	menuColl   *mongo.Collection
+	mtxColl    *mongo.Collection
 
 	// 内存缓存
 	cacheBackends []APIBackend
@@ -224,6 +226,7 @@ func initDB() {
 	apiColl = db.Collection("proxy_api")
 	m3u8Coll = db.Collection("proxy_m3u8")
 	menuColl = db.Collection("proxy_menu")
+	mtxColl = db.Collection("mediamtx_nodes")
 
 	// 初始化加载缓存
 	loadCache()
@@ -264,6 +267,12 @@ func ensureDatabaseDefaults() {
 	// proxy_menu: id 唯一
 	_, _ = menuColl.Indexes().CreateOne(ctx, mongo.IndexModel{
 		Keys:    bson.D{{Key: "id", Value: 1}},
+		Options: uniqueOpt,
+	})
+
+	// mediamtx_nodes: ip 唯一
+	_, _ = mtxColl.Indexes().CreateOne(ctx, mongo.IndexModel{
+		Keys:    bson.D{{Key: "ip", Value: 1}},
 		Options: uniqueOpt,
 	})
 
@@ -789,6 +798,9 @@ func runServer(portStr string) {
 			pages.GET("/api", func(c *gin.Context) {
 				renderTemplate(c, "views/api.html")
 			})
+			pages.GET("/mediamtx", func(c *gin.Context) {
+				renderTemplate(c, "views/mediamtx.html")
+			})
 			pages.GET("/m3u8", func(c *gin.Context) {
 				renderTemplate(c, "views/m3u8.html")
 			})
@@ -1030,6 +1042,9 @@ func runServer(portStr string) {
 					loadCache()
 					c.JSON(200, gin.H{"status": true})
 				})
+
+				// MediaMTX 路由注册
+				RegisterMediaMTXRoutes(biz, mtxColl)
 			}
 		}
 	}
@@ -1056,11 +1071,12 @@ func renderTemplate(c *gin.Context, path string) {
 		nav := NavbarTemplate
 		currentPath := c.Request.URL.Path
 		// 设置 active 状态
-		nav = strings.ReplaceAll(nav, "{{ACTIVE_API}}",    getBtnActive(currentPath, "/dash/api"))
-		nav = strings.ReplaceAll(nav, "{{ACTIVE_M3U8}}",   getBtnActive(currentPath, "/dash/m3u8"))
-		nav = strings.ReplaceAll(nav, "{{ACTIVE_MENU}}",   getBtnActive(currentPath, "/dash/menu"))
-		nav = strings.ReplaceAll(nav, "{{ACTIVE_USERS}}",  getBtnActive(currentPath, "/dash/users"))
-		nav = strings.ReplaceAll(nav, "{{ACTIVE_SYSTEM}}", getBtnActive(currentPath, "/dash/system"))
+		nav = strings.ReplaceAll(nav, "{{ACTIVE_API}}",      getBtnActive(currentPath, "/dash/api"))
+		nav = strings.ReplaceAll(nav, "{{ACTIVE_MEDIAMTX}}", getBtnActive(currentPath, "/dash/mediamtx"))
+		nav = strings.ReplaceAll(nav, "{{ACTIVE_M3U8}}",     getBtnActive(currentPath, "/dash/m3u8"))
+		nav = strings.ReplaceAll(nav, "{{ACTIVE_MENU}}",     getBtnActive(currentPath, "/dash/menu"))
+		nav = strings.ReplaceAll(nav, "{{ACTIVE_USERS}}",    getBtnActive(currentPath, "/dash/users"))
+		nav = strings.ReplaceAll(nav, "{{ACTIVE_SYSTEM}}",   getBtnActive(currentPath, "/dash/system"))
 		html = strings.ReplaceAll(html, "{{NAVBAR}}", nav)
 	}
 
