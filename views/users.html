@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户管理 - IPTV 调度中心</title>
+    <link rel="icon" href="/static/img/logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/all.min.css">
+    <script src="/static/js/sweetalert2.all.min.js"></script>
+    <script src="/static/js/crypto-js.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f5f7FA; color: #333; }
+
+        /* === NAV === */
+        .navbar { background: #fff; border-bottom: 1px solid #f1f5f9; position: sticky; top: 0; z-index: 100; }
+        .navbar-inner { max-width: 1152px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand img { width: 32px; height: 32px; object-fit: contain; }
+        .brand-name { font-weight: 700; font-size: 18px; color: #1e293b; letter-spacing: -0.02em; }
+        .nav-links { display: flex; height: 64px; }
+        .nav-link { padding: 0 20px; display: flex; align-items: center; font-size: 14px; font-weight: 500; color: #94a3b8; text-decoration: none; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .nav-link:hover { color: #10B981; }
+        .nav-link.active { color: #10B981; border-bottom-color: #10B981; font-weight: 700; }
+        .nav-right { display: flex; align-items: center; gap: 16px; }
+        .btn-logout { background: none; border: none; color: #cbd5e1; cursor: pointer; font-size: 14px; }
+        .btn-logout:hover { color: #f87171; }
+
+        .container { max-width: 1152px; margin: 0 auto; padding: 32px 24px 80px; }
+        .page-header { margin-bottom: 32px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .page-header h1 { font-size: 24px; font-weight: 700; color: #1e293b; }
+        .page-header p { font-size: 13px; color: #64748b; margin-top: 6px; }
+
+        .card { background: #fff; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; overflow: hidden; margin-bottom: 32px; }
+        .card-header { padding: 16px 24px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; }
+        .card-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; flex-shrink: 0; }
+        .card-icon.blue { background-color: #3b82f6; }
+        .card-title { font-weight: 700; font-size: 14px; color: #1e293b; }
+
+        table { width: 100%; border-collapse: collapse; }
+        thead th { padding: 12px 24px; font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; background: rgba(248,250,252,0.5); text-align: left; }
+        tbody tr { border-top: 1px solid #f8fafc; transition: background 0.15s; }
+        tbody tr:hover { background: rgba(248,250,252,0.5); }
+        tbody td { padding: 16px 24px; font-size: 14px; color: #475569; }
+        .user-name { font-weight: 700; color: #1e293b; }
+
+        .btn-add { background: #10B981; color: #fff; border: none; padding: 10px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 8px; }
+        .btn-add:hover { background: #059669; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,0.2); }
+
+        .btn-action { width: 32px; height: 32px; border-radius: 8px; border: 1px solid #f1f5f9; background: #fff; color: #64748b; cursor: pointer; transition: all 0.2s; }
+        .btn-action:hover { border-color: #10B981; color: #10B981; background: #f0fdf4; }
+        .btn-action.del:hover { border-color: #f87171; color: #f87171; background: #fef2f2; }
+
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+        .badge-admin { background: #fee2e2; color: #ef4444; }
+        .badge-user { background: #e0f2fe; color: #0ea5e9; }
+
+        /* Modal Form */
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 8px; }
+        .input-field { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 14px; transition: all 0.2s; outline: none; }
+        .input-field:focus { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.1); }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <div style="display:flex; align-items:center; gap:40px;">
+                <div class="brand">
+                    <img src="/static/img/logo.png" alt="Logo">
+                    <span class="brand-name">IPTV 调度管理中心</span>
+                </div>
+                {{NAVBAR}}
+            </div>
+            <div class="nav-right">
+                <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <div>
+                <h1>管理账号设置</h1>
+                <p>配置后台访问权限，支持多管理员协作</p>
+            </div>
+            <button class="btn-add" onclick="showAddModal()">
+                <i class="fa-solid fa-plus"></i> 添加新账号
+            </button>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon blue"><i class="fa-solid fa-users-gear"></i></div>
+                <div class="card-title">系统账号列表</div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>账号 (Mail)</th>
+                        <th>显示名称</th>
+                        <th>权限等级</th>
+                        <th style="width:120px; text-align:center;">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="user_list">
+                    <!-- Dynamic Content -->
+                </tbody>
+            </table>
+        </div>
+
+        <footer style="text-align: center; padding: 40px 0 60px; color: #cbd5e1; font-size: 11px; font-weight: 500; letter-spacing: 0.05em;">
+            &copy; 2026 IPTV 调度管理中心 · <span style="color: #94a3b8;">{{VERSION}}</span>
+        </footer>
+    </div>
+
+    <script>
+        async function loadUsers() {
+            const res = await fetch('/dash/biz/users');
+            const users = await res.json();
+            const tbody = document.getElementById('user_list');
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td><code>${u.Mail}</code></td>
+                    <td><span class="user-name">${u.name || '-'}</span></td>
+                    <td>
+                        <span class="badge ${u.level === 100 ? 'badge-admin' : 'badge-user'}">
+                            ${u.level === 100 ? '超级管理员' : '普通会员'}
+                        </span>
+                    </td>
+                    <td style="text-align:center;">
+                        <div style="display:flex; gap:8px; justify-content:center;">
+                            <button class="btn-action" onclick="showEditModal('${u.Mail}', '${u.name}', ${u.level})" title="修改资料"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="btn-action del" onclick="delUser('${u.Mail}')" title="删除账号"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function showAddModal() {
+            Swal.fire({
+                title: '添加新账号',
+                html: `
+                    <div class="form-group">
+                        <label class="form-label">邮箱账号 (登录用)</label>
+                        <input id="swal_mail" class="input-field" placeholder="example@iptv.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">显示名称</label>
+                        <input id="swal_name" class="input-field" placeholder="如：张三">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">初始密码</label>
+                        <input id="swal_pass" type="password" class="input-field" placeholder="建议包含字母与数字">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">权限等级</label>
+                        <select id="swal_level" class="input-field">
+                            <option value="100">超级管理员</option>
+                            <option value="1">普通会员</option>
+                        </select>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: '立即创建',
+                cancelButtonText: '取消',
+                focusConfirm: false,
+                preConfirm: () => {
+                    const mail = document.getElementById('swal_mail').value;
+                    const name = document.getElementById('swal_name').value;
+                    const pass = document.getElementById('swal_pass').value;
+                    const level = parseInt(document.getElementById('swal_level').value);
+                    if (!mail || !pass) return Swal.showValidationMessage('账号和密码不能为空');
+                    return { mail, name, pass, level };
+                }
+            }).then((res) => {
+                if (res.isConfirmed) saveUser(res.value);
+            });
+        }
+
+        function showEditModal(mail, name, level) {
+            Swal.fire({
+                title: '修改账号资料',
+                html: `
+                    <div class="form-group">
+                        <label class="form-label">邮箱账号</label>
+                        <input id="swal_mail" class="input-field" value="${mail}" readonly style="background:#f8fafc; color:#94a3b8;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">显示名称</label>
+                        <input id="swal_name" class="input-field" value="${name}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">重置密码 (留空则不修改)</label>
+                        <input id="swal_pass" type="password" class="input-field" placeholder="若无需修改请留空">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">权限等级</label>
+                        <select id="swal_level" class="input-field">
+                            <option value="100" ${level===100?'selected':''}>超级管理员</option>
+                            <option value="1" ${level!==100?'selected':''}>普通会员</option>
+                        </select>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: '保存修改',
+                cancelButtonText: '取消',
+                focusConfirm: false,
+                preConfirm: () => {
+                    const mail = document.getElementById('swal_mail').value;
+                    const name = document.getElementById('swal_name').value;
+                    const pass = document.getElementById('swal_pass').value;
+                    const level = parseInt(document.getElementById('swal_level').value);
+                    return { mail, name, pass, level };
+                }
+            }).then((res) => {
+                if (res.isConfirmed) saveUser(res.value);
+            });
+        }
+
+        async function saveUser(data) {
+            // 如果提供了密码，进行 MD5 加密
+            if (data.pass) {
+                data.password = CryptoJS.MD5(data.pass).toString();
+            }
+            delete data.pass;
+
+            const res = await fetch('/dash/biz/user-save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            if (result.status) {
+                Swal.fire('成功', '操作已完成', 'success');
+                loadUsers();
+            } else {
+                Swal.fire('错误', result.msg, 'error');
+            }
+        }
+
+        async function delUser(mail) {
+            const res = await Swal.fire({
+                title: '确定要删除该账号吗？',
+                text: "此操作不可撤销，且系统必须保留至少一个管理员。",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#f87171',
+                confirmButtonText: '确认删除',
+                cancelButtonText: '取消'
+            });
+
+            if (res.isConfirmed) {
+                const response = await fetch('/dash/biz/user-del', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mail })
+                });
+                const result = await response.json();
+                if (result.status) {
+                    Swal.fire('已删除', '账号已从系统中移除', 'success');
+                    loadUsers();
+                } else {
+                    Swal.fire('删除失败', result.msg, 'error');
+                }
+            }
+        }
+
+        function logout() {
+            location.href = '/dash/logout';
+        }
+
+        window.onload = loadUsers;
+    </script>
+</body>
+</html>

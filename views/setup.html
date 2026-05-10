@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>初始化配置 - IPTV 调度中心</title>
+    <link rel="icon" href="/static/img/logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/all.min.css">
+    <script src="/static/js/sweetalert2.all.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #f5f7FA;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .setup-wrap { width: 100%; max-width: 560px; }
+        .setup-header { text-align: center; margin-bottom: 32px; }
+        .logo-box {
+            width: 64px; height: 64px; background: #f97316;
+            border-radius: 18px; display: flex; align-items: center;
+            justify-content: center; margin: 0 auto 20px;
+            box-shadow: 0 10px 24px rgba(249,115,22,0.2);
+        }
+        .logo-box i { color: #fff; font-size: 26px; }
+        .setup-header h1 { font-size: 22px; font-weight: 700; color: #1e293b; margin-bottom: 6px; }
+        .setup-header p { font-size: 13px; color: #64748b; }
+
+        /* Notice banner */
+        .notice {
+            background: #fff7ed; border: 1px solid #fed7aa;
+            border-radius: 12px; padding: 14px 16px;
+            display: flex; align-items: flex-start; gap: 10px;
+            margin-bottom: 24px;
+        }
+        .notice i { color: #f97316; margin-top: 2px; flex-shrink: 0; }
+        .notice p { font-size: 13px; color: #9a3412; line-height: 1.6; }
+
+        /* Card */
+        .card {
+            background: #fff; border-radius: 20px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.05);
+            border: 1px solid #f1f5f9; overflow: hidden;
+        }
+        .card-header {
+            padding: 20px 28px; background: #f8fafc;
+            border-bottom: 1px solid #f1f5f9;
+            display: flex; align-items: center; gap: 12px;
+        }
+        .card-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: #f97316; display: flex;
+            align-items: center; justify-content: center;
+            color: #fff; font-size: 13px;
+        }
+        .card-title { font-weight: 700; font-size: 14px; color: #1e293b; }
+        .card-subtitle { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+        /* Form */
+        .form-body { padding: 28px; display: flex; flex-direction: column; gap: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-label { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.05em; }
+        .input-row { display: flex; gap: 12px; }
+        .input-field {
+            flex: 1; border: 1px solid #e2e8f0; border-radius: 8px;
+            padding: 10px 14px; font-size: 14px; color: #334155;
+            outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+            background: #fff;
+        }
+        .input-field:focus { border-color: #f97316; box-shadow: 0 0 0 3px rgba(249,115,22,0.08); }
+        .input-field.short { max-width: 120px; flex: 0 0 auto; }
+        .form-hint { font-size: 11px; color: #94a3b8; }
+
+        /* Divider */
+        .divider { border: none; border-top: 1px solid #f1f5f9; margin: 4px 0; }
+
+        /* Actions */
+        .form-actions { padding: 20px 28px; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; gap: 12px; justify-content: flex-end; }
+        .btn-test {
+            background: #fff; border: 1px solid #e2e8f0; color: #475569;
+            padding: 10px 20px; border-radius: 8px; font-size: 13px;
+            font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+        .btn-test:hover { border-color: #f97316; color: #f97316; }
+        .btn-save {
+            background: #f97316; color: #fff; border: none;
+            padding: 10px 28px; border-radius: 8px; font-size: 13px;
+            font-weight: 700; cursor: pointer;
+            box-shadow: 0 4px 12px rgba(249,115,22,0.25);
+            transition: all 0.2s;
+        }
+        .btn-save:hover { background: #ea580c; transform: translateY(-1px); }
+
+        /* DB status indicator */
+        .db-status { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+        .db-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .db-dot.ok { background: #10B981; box-shadow: 0 0 6px rgba(16,185,129,0.4); }
+        .db-dot.fail { background: #f87171; box-shadow: 0 0 6px rgba(248,113,113,0.4); }
+
+        .back-link {
+            display: block; text-align: center; margin-top: 20px;
+            font-size: 13px; color: #94a3b8; text-decoration: none;
+        }
+        .back-link:hover { color: #10B981; }
+    </style>
+</head>
+<body>
+    <div class="setup-wrap">
+        <div class="setup-header">
+            <div class="logo-box"><i class="fa-solid fa-database"></i></div>
+            <h1>数据库初始化配置</h1>
+            <p>首次部署或连接配置异常时，在此设置 MongoDB 连接参数</p>
+        </div>
+
+        <div class="notice">
+            <i class="fa-solid fa-circle-info"></i>
+            <p>此页面<strong>无需登录</strong>即可访问。配置正确保存后，系统将自动重新连接数据库，并跳转到登录页面。</p>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon"><i class="fa-solid fa-plug"></i></div>
+                <div>
+                    <div class="card-title">MongoDB 连接参数</div>
+                    <div class="card-subtitle" id="db_status_text">正在检测连接状态...</div>
+                </div>
+            </div>
+
+            <div class="form-body">
+                <div class="form-group">
+                    <label class="form-label">服务器地址 / 端口</label>
+                    <div class="input-row">
+                        <input type="text" id="cfg_host" class="input-field" placeholder="10.239.113.34">
+                        <input type="text" id="cfg_port" class="input-field short" placeholder="26110">
+                    </div>
+                    <span class="form-hint">MongoDB 服务器的 IP 地址和监听端口</span>
+                </div>
+
+                <hr class="divider">
+
+                <div class="form-group">
+                    <label class="form-label">认证账号</label>
+                    <input type="text" id="cfg_user" class="input-field" placeholder="cloud（无认证留空）" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">认证密码</label>
+                    <input type="password" id="cfg_pass" class="input-field" placeholder="留空表示保持不变" autocomplete="new-password">
+                </div>
+
+                <hr class="divider">
+
+                <div class="form-group">
+                    <label class="form-label">数据库名称</label>
+                    <input type="text" id="cfg_dbname" class="input-field" placeholder="cloud">
+                    <span class="form-hint">连接到指定的 MongoDB 数据库集合</span>
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button onclick="testConn()" class="btn-test"><i class="fa-solid fa-wifi" style="margin-right:6px;"></i>测试连接</button>
+                <button onclick="saveConn()" class="btn-save"><i class="fa-solid fa-floppy-disk" style="margin-right:6px;"></i>保存并连接</button>
+            </div>
+        </div>
+
+        <a href="/dash/login" class="back-link"><i class="fa-solid fa-arrow-left" style="margin-right:6px;"></i>返回登录页</a>
+
+        <!-- Footer -->
+        <footer style="text-align: center; padding: 40px 0 60px; color: #cbd5e1; font-size: 11px; font-weight: 500; letter-spacing: 0.05em;">
+            &copy; 2026 IPTV 调度管理中心 · <span style="color: #94a3b8;">{{VERSION}}</span>
+        </footer>
+    </div>
+
+    <script>
+        // 加载当前配置
+        async function loadCurrent() {
+            try {
+                const res = await fetch('/dash/config-info');
+                const cfg = await res.json();
+                if (cfg.host) document.getElementById('cfg_host').value = cfg.host;
+                if (cfg.port) document.getElementById('cfg_port').value = cfg.port;
+                if (cfg.user) document.getElementById('cfg_user').value = cfg.user;
+                if (cfg.dbname) document.getElementById('cfg_dbname').value = cfg.dbname;
+
+                // 检测连接状态显示
+                const resLogin = await fetch('/dash/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mail: '', password: '' })
+                });
+                const r = await resLogin.json();
+                const statusEl = document.getElementById('db_status_text');
+                if (r.msg && r.msg.includes('数据库')) {
+                    statusEl.innerHTML = '<span class="db-status"><span class="db-dot fail"></span><span style="color:#f87171;">连接异常，请检查参数</span></span>';
+                } else {
+                    statusEl.innerHTML = '<span class="db-status"><span class="db-dot ok"></span><span style="color:#10B981;">当前连接正常</span></span>';
+                }
+            } catch(e) {}
+        }
+
+        async function testConn() {
+            const payload = buildPayload();
+            if (!payload) return;
+            const btn = event.target;
+            btn.disabled = true; btn.innerText = '测试中...';
+            try {
+                const res = await fetch('/dash/setup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'dreamId': '' },
+                    body: JSON.stringify(payload)
+                });
+                const r = await res.json();
+                if (r.status) {
+                    Swal.fire({ icon: 'success', title: '连接成功', text: 'MongoDB 连接测试通过！', confirmButtonColor: '#10B981' });
+                } else {
+                    Swal.fire({ icon: 'error', title: '连接失败', text: r.msg || '无法连接到数据库，请检查参数', confirmButtonColor: '#f97316' });
+                }
+            } catch(e) {
+                Swal.fire({ icon: 'error', title: '请求异常', text: e.message, confirmButtonColor: '#f97316' });
+            }
+            btn.disabled = false; btn.innerText = '测试连接';
+        }
+
+        async function saveConn() {
+            const payload = buildPayload();
+            if (!payload) return;
+            try {
+                const res = await fetch('/dash/setup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'dreamId': '' },
+                    body: JSON.stringify(payload)
+                });
+                const r = await res.json();
+                if (r.status) {
+                    Swal.fire({
+                        icon: 'success', title: '配置已保存',
+                        text: '数据库连接成功，即将跳转到登录页...',
+                        confirmButtonColor: '#10B981', timer: 2000, showConfirmButton: false
+                    }).then(() => location.href = '/dash/login');
+                } else {
+                    Swal.fire({ icon: 'error', title: '保存失败', text: r.msg || '数据库连接失败，请检查参数', confirmButtonColor: '#f97316' });
+                }
+            } catch(e) {
+                Swal.fire({ icon: 'error', title: '请求异常', text: e.message, confirmButtonColor: '#f97316' });
+            }
+        }
+
+        function buildPayload() {
+            const host   = document.getElementById('cfg_host').value.trim();
+            const port   = document.getElementById('cfg_port').value.trim();
+            const user   = document.getElementById('cfg_user').value.trim();
+            const pass   = document.getElementById('cfg_pass').value;
+            const dbname = document.getElementById('cfg_dbname').value.trim();
+            if (!host || !port || !dbname) {
+                Swal.fire({ icon: 'warning', title: '参数不完整', text: '服务器地址、端口和数据库名为必填项', confirmButtonColor: '#f97316' });
+                return null;
+            }
+            return { host, port, user, pass, dbname };
+        }
+
+        loadCurrent();
+    </script>
+</body>
+</html>

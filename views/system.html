@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>系统设置 - IPTV 调度中心</title>
+    <link rel="icon" href="/static/img/logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/all.min.css">
+    <script src="/static/js/sweetalert2.all.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f7FA; color: #333; }
+        .navbar { background: #fff; border-bottom: 1px solid #f1f5f9; position: sticky; top: 0; z-index: 100; }
+        .navbar-inner { max-width: 1152px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand img { width: 32px; height: 32px; object-fit: contain; }
+        .brand-name { font-weight: 700; font-size: 18px; color: #1e293b; }
+        .nav-links { display: flex; height: 64px; }
+        .nav-link { padding: 0 20px; display: flex; align-items: center; font-size: 14px; font-weight: 500; color: #94a3b8; text-decoration: none; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .nav-link:hover { color: #10B981; }
+        .nav-link.active { color: #10B981; border-bottom-color: #10B981; font-weight: 700; }
+        .btn-logout { background: none; border: none; color: #cbd5e1; cursor: pointer; font-size: 14px; }
+        .btn-logout:hover { color: #f87171; }
+        .container { max-width: 1152px; margin: 0 auto; padding: 32px 24px 80px; }
+        .page-header { margin-bottom: 32px; }
+        .page-header h1 { font-size: 24px; font-weight: 700; color: #1e293b; }
+        .page-header p { font-size: 13px; color: #64748b; margin-top: 6px; }
+        .card { background: #fff; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; overflow: hidden; margin-bottom: 32px; }
+        .card-header { padding: 16px 24px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; }
+        .card-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; flex-shrink: 0; }
+        .card-icon.green { background-color: #10B981; }
+        .card-title { font-weight: 700; font-size: 14px; color: #1e293b; }
+        .card-subtitle { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+        .form-body { padding: 40px 56px; display: flex; flex-direction: column; gap: 36px; }
+        .form-row { display: flex; align-items: flex-start; }
+        .form-label-col { width: 22%; padding-top: 10px; text-align: right; padding-right: 40px; flex-shrink: 0; }
+        .form-label { font-size: 13px; font-weight: 700; color: #475569; }
+        .form-input-col { flex: 1; max-width: 580px; }
+        .input-field { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 16px; font-size: 14px; color: #334155; outline: none; transition: border-color 0.2s, box-shadow 0.2s; background: #fff; }
+        .input-field:focus { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); }
+        .form-hint { margin-top: 8px; font-size: 12px; color: #f87171; font-weight: 500; }
+        .form-footer { display: flex; align-items: center; padding-top: 36px; border-top: 1px solid #f8fafc; }
+        .form-footer-space { width: 22%; padding-right: 40px; flex-shrink: 0; }
+        .btn-submit { background-color: #10B981; color: #fff; border: none; padding: 12px 40px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.2); transition: all 0.2s; }
+        .btn-submit:hover { background-color: #059669; transform: translateY(-1px); }
+
+        /* === WARNING MODAL === */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.6); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; }
+        .modal-overlay.open { display: flex; }
+        .warn-modal { background: #fff; width: 100%; max-width: 480px; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 60px rgba(0,0,0,0.2); animation: modalIn 0.25s ease-out; }
+        @keyframes modalIn { from { opacity:0; transform:scale(0.92) translateY(10px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        .warn-modal-header { background: linear-gradient(135deg, #dc2626, #b91c1c); padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; }
+        .warn-modal-title { display: flex; align-items: center; gap: 10px; color: #fff; font-weight: 700; font-size: 16px; }
+        .warn-modal-close { background: none; border: none; color: rgba(255,255,255,0.7); cursor: pointer; font-size: 18px; transition: color 0.2s; }
+        .warn-modal-close:hover { color: #fff; }
+        .warn-modal-body { padding: 24px; }
+        .warn-notice { display: flex; align-items: flex-start; gap: 10px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 16px; margin-bottom: 20px; }
+        .warn-notice i { color: #dc2626; margin-top: 2px; flex-shrink: 0; }
+        .warn-notice p { font-size: 13px; color: #7f1d1d; line-height: 1.7; }
+        .warn-items { display: flex; flex-direction: column; gap: 10px; }
+        .warn-item { display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 12px; border: 2px solid #f1f5f9; cursor: pointer; transition: all 0.2s; }
+        .warn-item:hover { border-color: #fca5a5; background: #fff7f7; }
+        .warn-item.selected { border-color: #dc2626; background: #fef2f2; }
+        .warn-item-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+        .warn-item-icon.orange { background: #fff7ed; color: #f97316; }
+        .warn-item-icon.red { background: #fef2f2; color: #dc2626; }
+        .warn-item-content h4 { font-size: 14px; font-weight: 700; color: #1e293b; margin-bottom: 3px; }
+        .warn-item-content p { font-size: 12px; color: #64748b; line-height: 1.5; }
+        .warn-modal-footer { padding: 16px 24px; background: #f8fafc; display: flex; justify-content: flex-end; gap: 10px; }
+        .btn-cancel { background: #64748b; color: #fff; border: none; padding: 10px 24px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-cancel:hover { background: #475569; }
+        .btn-confirm-danger { background: linear-gradient(135deg, #dc2626, #b91c1c); color: #fff; border: none; padding: 10px 24px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(220,38,38,0.3); transition: all 0.2s; }
+        .btn-confirm-danger:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(220,38,38,0.35); }
+    </style>
+</head>
+<body>
+
+<nav class="navbar">
+    <div class="navbar-inner">
+        <div style="display:flex;align-items:center;gap:40px;">
+            <div class="brand">
+                <img src="/static/img/logo.png" alt="Logo">
+                <span class="brand-name">IPTV 调度管理中心</span>
+            </div>
+            {{NAVBAR}}
+        </div>
+        <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="page-header">
+        <h1>应用参数设置</h1>
+        <p>配置系统核心基础设施参数，修改后需重启服务生效</p>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <div class="card-icon green"><i class="fa-solid fa-database"></i></div>
+            <div>
+                <div class="card-title">数据库连接配置</div>
+                <div class="card-subtitle">MongoDB 连接参数，修改后服务将自动重启</div>
+            </div>
+        </div>
+        <div class="form-body">
+
+            <div class="form-row">
+                <div class="form-label-col"><label class="form-label">数据库地址:</label></div>
+                <div class="form-input-col">
+                    <input type="text" id="sys_db_host" class="input-field" placeholder="10.0.0.1">
+                    <p class="form-hint">MongoDB 监听 IP 地址</p>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-label-col"><label class="form-label">监听端口:</label></div>
+                <div class="form-input-col">
+                    <input type="text" id="sys_db_port" class="input-field" placeholder="27017">
+                    <p class="form-hint">MongoDB 监听端口</p>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-label-col"><label class="form-label">认证账号:</label></div>
+                <div class="form-input-col">
+                    <input type="text" id="sys_db_user" class="input-field" placeholder="admin" autocomplete="off">
+                    <p class="form-hint">数据库认证用户名，无认证留空</p>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-label-col"><label class="form-label">认证密码:</label></div>
+                <div class="form-input-col">
+                    <input type="password" id="sys_db_pass" class="input-field" placeholder="留空则不修改密码" autocomplete="off">
+                    <p class="form-hint">留空表示保持现有密码不变</p>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-label-col"><label class="form-label">数据库名称:</label></div>
+                <div class="form-input-col">
+                    <input type="text" id="sys_db_name" class="input-field" placeholder="iptv">
+                    <p class="form-hint">连接的数据库集合名称</p>
+                </div>
+            </div>
+
+            <div class="form-footer">
+                <div class="form-footer-space"></div>
+                <button onclick="openWarnModal()" class="btn-submit">
+                    <i class="fa-solid fa-floppy-disk" style="margin-right:8px;"></i>保存配置
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer style="text-align: center; padding: 40px 0 60px; color: #cbd5e1; font-size: 11px; font-weight: 500; letter-spacing: 0.05em; border-top: 1px solid #f1f5f9; background: #fff;">
+    &copy; 2026 IPTV 调度管理中心 · <span style="color: #94a3b8;">{{VERSION}}</span>
+</footer>
+
+<!-- Warning Modal -->
+<div id="warn_modal" class="modal-overlay">
+    <div class="warn-modal">
+        <div class="warn-modal-header">
+            <div class="warn-modal-title">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                高危操作确认
+            </div>
+            <button class="warn-modal-close" onclick="closeWarnModal()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <div class="warn-modal-body">
+            <div class="warn-notice">
+                <i class="fa-solid fa-circle-info"></i>
+                <p>修改数据库配置属于<strong>高危操作</strong>，将立即导致以下影响，请确认您已充分了解后果并做好备份。</p>
+            </div>
+            <div class="warn-items">
+                <div class="warn-item">
+                    <div class="warn-item-icon orange"><i class="fa-solid fa-power-off"></i></div>
+                    <div class="warn-item-content">
+                        <h4>服务临时中断</h4>
+                        <p>保存后系统将立即尝试重新连接数据库，期间所有直播调度和接口代理将短暂中断。</p>
+                    </div>
+                </div>
+                <div class="warn-item">
+                    <div class="warn-item-icon orange"><i class="fa-solid fa-users-slash"></i></div>
+                    <div class="warn-item-content">
+                        <h4>登录状态失效</h4>
+                        <p>所有在线用户的 Session 将立即失效，需重新登录管理后台。</p>
+                    </div>
+                </div>
+                <div class="warn-item">
+                    <div class="warn-item-icon red"><i class="fa-solid fa-database"></i></div>
+                    <div class="warn-item-content">
+                        <h4 style="color:#dc2626;">数据访问风险</h4>
+                        <p>若新连接参数错误，系统将无法读取频道映射、代理节点等数据，导致服务完全不可用。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="warn-modal-footer">
+            <button class="btn-cancel" onclick="closeWarnModal()"><i class="fa-solid fa-xmark" style="margin-right:6px;"></i>取消</button>
+            <button class="btn-confirm-danger" onclick="doSave()"><i class="fa-solid fa-check" style="margin-right:6px;"></i>我已了解，确认保存</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function init() {
+        const res = await fetch('/dash/status', { headers: { 'dreamId': localStorage.getItem('dreamId') } });
+        if (res.status === 401) return location.href = '/dash/login';
+        const data = await res.json();
+        const cfg = data.config || {};
+        document.getElementById('sys_db_host').value = cfg.host || '';
+        document.getElementById('sys_db_port').value = cfg.port || '';
+        document.getElementById('sys_db_user').value = cfg.user || '';
+        document.getElementById('sys_db_name').value = cfg.dbname || '';
+    }
+
+    function openWarnModal()  { document.getElementById('warn_modal').classList.add('open'); }
+    function closeWarnModal() { document.getElementById('warn_modal').classList.remove('open'); }
+
+    async function doSave() {
+        closeWarnModal();
+        const config = {
+            host:   document.getElementById('sys_db_host').value.trim(),
+            port:   document.getElementById('sys_db_port').value.trim(),
+            user:   document.getElementById('sys_db_user').value.trim(),
+            pass:   document.getElementById('sys_db_pass').value,
+            dbname: document.getElementById('sys_db_name').value.trim()
+        };
+        if (!config.host || !config.port || !config.dbname) {
+            Swal.fire({ icon: 'error', title: '参数不完整', text: '数据库地址、端口和名称为必填项', confirmButtonColor: '#10B981' });
+            return;
+        }
+        try {
+            const res = await fetch('/dash/setup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'dreamId': localStorage.getItem('dreamId') },
+                body: JSON.stringify(config)
+            });
+            const result = await res.json();
+            if (result.status) {
+                Swal.fire({
+                    icon: 'success', title: '配置已保存',
+                    text: '数据库配置已更新，系统正在重新连接...',
+                    confirmButtonColor: '#10B981', timer: 3000, showConfirmButton: false
+                }).then(() => location.reload());
+            } else {
+                Swal.fire({ icon: 'error', title: '保存失败', text: result.msg || '配置保存失败，请检查参数', confirmButtonColor: '#10B981' });
+            }
+        } catch(e) {
+            Swal.fire({ icon: 'error', title: '网络异常', text: '请求失败: ' + e.message, confirmButtonColor: '#10B981' });
+        }
+    }
+
+    function logout() { localStorage.removeItem('dreamId'); location.href = '/dash/logout'; }
+    init();
+</script>
+</body>
+</html>

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>直播调度 - IPTV 调度中心</title>
+    <link rel="icon" href="/static/img/logo.png" type="image/x-icon">
+    <link rel="stylesheet" href="/static/css/all.min.css">
+    <script src="/static/js/sweetalert2.all.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; background-color: #f5f7FA; color: #333; }
+
+        /* === NAV === */
+        .navbar { background: #fff; border-bottom: 1px solid #f1f5f9; position: sticky; top: 0; z-index: 100; }
+        .navbar-inner { max-width: 1152px; margin: 0 auto; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; }
+        .brand { display: flex; align-items: center; gap: 12px; }
+        .brand img { width: 32px; height: 32px; object-fit: contain; }
+        .brand-name { font-weight: 700; font-size: 18px; color: #1e293b; letter-spacing: -0.02em; }
+        .nav-links { display: flex; height: 64px; }
+        .nav-link { padding: 0 20px; display: flex; align-items: center; font-size: 14px; font-weight: 500; color: #94a3b8; text-decoration: none; border-bottom: 2px solid transparent; transition: all 0.2s; }
+        .nav-link:hover { color: #10B981; }
+        .nav-link.active { color: #10B981; border-bottom-color: #10B981; font-weight: 700; }
+        .btn-logout { background: none; border: none; color: #cbd5e1; cursor: pointer; font-size: 14px; transition: color 0.2s; }
+        .btn-logout:hover { color: #f87171; }
+
+        /* === LAYOUT === */
+        .container { max-width: 1152px; margin: 0 auto; padding: 32px 24px 80px; }
+        .page-header { margin-bottom: 32px; }
+        .page-header h1 { font-size: 24px; font-weight: 700; color: #1e293b; }
+        .page-header p { font-size: 13px; color: #64748b; margin-top: 6px; }
+
+        /* === CARD === */
+        .card { background: #fff; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; overflow: hidden; margin-bottom: 32px; }
+        .card-header { padding: 16px 24px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 12px; }
+        .card-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; flex-shrink: 0; }
+        .card-icon.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+        .card-icon.green { background-color: #10B981; }
+        .card-title { font-weight: 700; font-size: 14px; color: #1e293b; }
+        .card-subtitle { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+
+        /* === TABLE === */
+        table { width: 100%; border-collapse: collapse; }
+        thead th { padding: 12px 24px; font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; background: rgba(248,250,252,0.5); text-align: left; }
+        thead th.center { text-align: center; }
+        tbody tr { border-top: 1px solid #f8fafc; transition: background 0.15s; }
+        tbody tr:hover { background: rgba(248,250,252,0.5); }
+        tbody td { padding: 14px 24px; font-size: 14px; color: #475569; vertical-align: middle; }
+        .td-center { text-align: center; }
+        .node-name { font-weight: 700; color: #1e293b; font-size: 14px; }
+
+        /* === IP / PORT / ARCH BADGES === */
+        .meta-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .badge-ip {
+            display: inline-flex; align-items: center; gap: 5px;
+            background: #ecfdf5; color: #10B981;
+            padding: 3px 10px; border-radius: 20px;
+            font-family: 'Consolas', 'Monaco', monospace; font-size: 12px;
+            border: 1px solid rgba(16,185,129,0.2); cursor: pointer; transition: all 0.2s;
+        }
+        .badge-ip:hover { background: #d1fae5; box-shadow: 0 2px 8px rgba(16,185,129,0.15); }
+        .badge-port {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #eff6ff; color: #3b82f6;
+            padding: 3px 10px; border-radius: 20px;
+            font-family: 'Consolas', 'Monaco', monospace; font-size: 12px;
+            border: 1px solid rgba(59,130,246,0.2);
+        }
+        .badge-arch {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #fdf4ff; color: #a855f7;
+            padding: 3px 10px; border-radius: 20px;
+            font-size: 11px; font-weight: 600;
+            border: 1px solid rgba(168,85,247,0.2);
+        }
+        .badge-sep { color: #e2e8f0; font-size: 12px; }
+
+        /* === WEIGHT === */
+        .weight-val { font-weight: 800; font-size: 15px; }
+        .weight-val.high { color: #10B981; }
+        .weight-val.mid  { color: #f59e0b; }
+        .weight-val.low  { color: #f87171; }
+
+        /* === TOGGLE === */
+        .toggle-wrap { display: flex; justify-content: center; }
+        .toggle { position: relative; width: 36px; height: 20px; display: inline-block; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-track { position: absolute; inset: 0; background: #e2e8f0; border-radius: 20px; transition: background 0.2s; cursor: pointer; }
+        .toggle input:checked + .toggle-track { background: #10B981; }
+        .toggle-track::after { content: ''; position: absolute; width: 14px; height: 14px; background: #fff; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+        .toggle input:checked + .toggle-track::after { transform: translateX(16px); }
+
+        /* === WEIGHT EDITOR === */
+        .weight-input { width: 48px; text-align: center; border: 1px solid #e2e8f0; border-radius: 6px; padding: 4px 6px; font-size: 13px; font-weight: 700; color: #10B981; outline: none; }
+        .weight-input:focus { border-color: #10B981; box-shadow: 0 0 0 2px rgba(16,185,129,0.1); }
+
+        /* === ACTION BTN === */
+        .btn-del { background: none; border: none; color: #e2e8f0; cursor: pointer; font-size: 14px; transition: color 0.2s; }
+        .btn-del:hover { color: #f87171; }
+        .btn-del:disabled { color: #f1f5f9; cursor: not-allowed; }
+
+        /* === FORM === */
+        .form-body { padding: 40px 56px; display: flex; flex-direction: column; gap: 40px; }
+        .form-row { display: flex; align-items: flex-start; }
+        .form-label-col { width: 22%; padding-top: 10px; text-align: right; padding-right: 40px; flex-shrink: 0; }
+        .form-label { font-size: 13px; font-weight: 700; color: #475569; }
+        .form-input-col { flex: 1; max-width: 580px; }
+        .input-field { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 16px; font-size: 14px; color: #334155; outline: none; transition: border-color 0.2s, box-shadow 0.2s; background: #fff; }
+        .input-field:focus { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); }
+        .form-hint { margin-top: 8px; font-size: 12px; color: #f87171; font-weight: 500; }
+        .form-footer { display: flex; align-items: center; padding-top: 40px; border-top: 1px solid #f8fafc; }
+        .form-footer-space { width: 22%; padding-right: 40px; flex-shrink: 0; }
+        .btn-submit { background-color: #10B981; color: #fff; border: none; padding: 12px 40px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.2); transition: all 0.2s; }
+        .btn-submit:hover { background-color: #059669; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16,185,129,0.25); }
+
+        /* === PING MODAL === */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.5); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 16px; }
+        .modal-overlay.open { display: flex; }
+        .ping-modal { background: #fff; width: 100%; max-width: 560px; border-radius: 20px; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.15); }
+        .ping-modal-header { padding: 16px 24px; border-bottom: 1px solid #f1f5f9; display: flex; align-items: center; gap: 10px; }
+        .ping-modal-header i { color: #94a3b8; }
+        .ping-modal-title { font-weight: 700; font-size: 15px; color: #1e293b; }
+        .ping-terminal { background: #1e293b; color: #f8fafc; font-family: 'Consolas','Monaco','Courier New',monospace; padding: 24px; font-size: 13px; line-height: 1.7; min-height: 220px; white-space: pre-wrap; word-break: break-all; }
+        .ping-modal-footer { padding: 16px 24px; background: #f8fafc; display: flex; justify-content: flex-end; }
+        .btn-close-ping { background-color: #10B981; color: #fff; border: none; padding: 8px 24px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .btn-close-ping:hover { background-color: #059669; }
+
+        /* === RANGE === */
+        input[type=range] { -webkit-appearance: none; width: 100%; height: 6px; background: #e2e8f0; border-radius: 3px; outline: none; }
+        input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: #10B981; cursor: pointer; box-shadow: 0 2px 6px rgba(16,185,129,0.3); }
+    </style>
+</head>
+<body>
+
+    <!-- 顶部导航栏 -->
+    <nav class="navbar">
+        <div class="navbar-inner">
+            <div style="display:flex;align-items:center;gap:40px;">
+                <div class="brand">
+                    <img src="/static/img/logo.png" alt="Logo">
+                    <span class="brand-name">IPTV 调度管理中心</span>
+                </div>
+                {{NAVBAR}}
+            </div>
+            <button class="btn-logout" onclick="logout()"><i class="fa-solid fa-power-off"></i></button>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>直播流调度管理</h1>
+            <p>多源负载均衡，按权重智能分配直播流，支持多服务器同时启用</p>
+        </div>
+
+        <!-- Source List Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon purple"><i class="fa-solid fa-tower-broadcast"></i></div>
+                <div>
+                    <div class="card-title">调度源明细</div>
+                </div>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>节点标识</th>
+                        <th>服务器信息</th>
+                        <th class="center">权重</th>
+                        <th class="center">启用</th>
+                        <th class="center">操作</th>
+                    </tr>
+                </thead>
+                <tbody id="m3u8_list">
+                    <tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:40px;">加载中...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Add Source Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-icon green"><i class="fa-solid fa-plus"></i></div>
+                <div>
+                    <div class="card-title">添加调度源</div>
+                    <div class="card-subtitle">配置新的 M3U8 直播分发节点</div>
+                </div>
+            </div>
+            <div class="form-body">
+
+                <div class="form-row">
+                    <div class="form-label-col"><label class="form-label">源名称:</label></div>
+                    <div class="form-input-col">
+                        <input type="text" id="new_m_name" class="input-field" placeholder="广州主源">
+                        <p class="form-hint">调度源名称标识</p>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label-col"><label class="form-label">服务器 IP:</label></div>
+                    <div class="form-input-col">
+                        <input type="text" id="new_m_ip" class="input-field" placeholder="10.0.0.1">
+                        <p class="form-hint">服务器公网/内网 IP</p>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label-col"><label class="form-label">服务端口:</label></div>
+                    <div class="form-input-col">
+                        <input type="text" id="new_m_port" class="input-field" placeholder="5678">
+                        <p class="form-hint">流服务端口</p>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label-col"><label class="form-label">系统架构:</label></div>
+                    <div class="form-input-col">
+                        <select id="new_m_type" class="input-field" style="cursor:pointer;">
+                            <option value="TamronOS">腾龙 (TamronOS)</option>
+                            <option value="MistServer">流媒体 (MistServer)</option>
+                            <option value="MediaMTX">MediaMTX</option>
+                        </select>
+                        <p class="form-hint">服务器运行的系统架构</p>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-label-col"><label class="form-label">分流权重:</label></div>
+                    <div class="form-input-col">
+                        <div style="display:flex;align-items:center;gap:16px;">
+                            <input type="range" id="new_m_weight_slider" min="1" max="10" value="5" oninput="document.getElementById('new_m_weight').value=this.value" style="flex:1;">
+                            <input type="number" id="new_m_weight" class="weight-input" min="1" max="10" value="5" oninput="document.getElementById('new_m_weight_slider').value=this.value">
+                        </div>
+                        <p class="form-hint">自动分流权重 (1-10)，数值越高分配流量越多</p>
+                    </div>
+                </div>
+
+                <div class="form-footer">
+                    <div class="form-footer-space"></div>
+                    <button onclick="addM3u8()" class="btn-submit">确认添加调度源</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer style="text-align: center; padding: 40px 0 60px; color: #cbd5e1; font-size: 11px; font-weight: 500; letter-spacing: 0.05em; border-top: 1px solid #f1f5f9; background: #fff;">
+        &copy; 2026 IPTV 调度管理中心 · <span style="color: #94a3b8;">{{VERSION}}</span>
+    </footer>
+
+    <!-- Ping Modal -->
+    <div id="ping_modal" class="modal-overlay">
+        <div class="ping-modal">
+            <div class="ping-modal-header">
+                <i class="fa-solid fa-terminal"></i>
+                <span class="ping-modal-title">Ping 结果</span>
+            </div>
+            <div id="ping_content" class="ping-terminal">正在检测网络延迟...</div>
+            <div class="ping-modal-footer">
+                <button onclick="closePing()" class="btn-close-ping">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sources = [];
+
+        async function init() {
+            try {
+                const res = await fetch('/dash/biz/sources', { headers: { 'dreamId': localStorage.getItem('dreamId') } });
+                if (res.status === 401) return location.href = '/dash/login';
+                sources = await res.json() || [];
+                render();
+            } catch(e) { console.error(e); }
+        }
+
+        function weightColor(w) {
+            if (w >= 7) return 'high';
+            if (w >= 4) return 'mid';
+            return 'low';
+        }
+
+        function render() {
+            const tbody = document.getElementById('m3u8_list');
+            if (!sources.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:40px;font-size:14px;">暂无调度源，请在下方添加</td></tr>';
+                return;
+            }
+            tbody.innerHTML = sources.map((s, i) => `
+                <tr>
+                    <td><span class="node-name">${s.name}</span></td>
+                    <td>
+                        <div class="meta-row">
+                            <span class="badge-ip" onclick="doPing('${s.ip}')" title="点击 Ping 测试">
+                                <i class="fa-solid fa-wifi" style="font-size:10px;"></i>${s.ip}
+                            </span>
+                            <span class="badge-sep">:</span>
+                            <span class="badge-port">
+                                <i class="fa-solid fa-plug" style="font-size:10px;"></i>${s.port}
+                            </span>
+                            <span class="badge-sep">/</span>
+                            <span class="badge-arch">
+                                <i class="fa-solid fa-microchip" style="font-size:10px;"></i>${s.type}
+                            </span>
+                        </div>
+                    </td>
+                    <td class="td-center">
+                        <input type="number" class="weight-input" value="${s.weight || 5}" min="1" max="10"
+                            onchange="updateWeight(${i}, this.value)"
+                            style="color:${s.weight >= 7 ? '#10B981' : s.weight >= 4 ? '#f59e0b' : '#f87171'}">
+                    </td>
+                    <td class="td-center">
+                        <div class="toggle-wrap">
+                            <label class="toggle">
+                                <input type="checkbox" ${s.active ? 'checked' : ''} onchange="toggleActive(${i})">
+                                <div class="toggle-track"></div>
+                            </label>
+                        </div>
+                    </td>
+                    <td class="td-center">
+                        <button class="btn-del" onclick="delSource('${s.name}')">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>`).join('');
+        }
+
+        async function doPing(ip) {
+            document.getElementById('ping_modal').classList.add('open');
+            document.getElementById('ping_content').innerText = '目标主机: ' + ip + '\n\n正在发起探测，请稍候...';
+            try {
+                const res = await fetch('/dash/biz/ping?ip=' + encodeURIComponent(ip), { headers: { 'dreamId': localStorage.getItem('dreamId') } });
+                const result = await res.json();
+                document.getElementById('ping_content').innerText = result.output || '无返回数据';
+            } catch(e) {
+                document.getElementById('ping_content').innerText = '探测失败: ' + e.message;
+            }
+        }
+        function closePing() { document.getElementById('ping_modal').classList.remove('open'); }
+
+        function showError(msg) {
+            Swal.fire({ icon:'error', title:'操作失败', text:msg, confirmButtonColor:'#10B981', confirmButtonText:'知道了' });
+        }
+
+        async function apiReq(url, method, body) {
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json', 'dreamId': localStorage.getItem('dreamId') },
+                body: body ? JSON.stringify(body) : null
+            });
+            const result = await res.json();
+            if (result.status) { init(); return true; }
+            showError(result.msg || '操作失败');
+            return false;
+        }
+
+        function addM3u8() {
+            const name   = document.getElementById('new_m_name').value.trim();
+            const ip     = document.getElementById('new_m_ip').value.trim();
+            const port   = document.getElementById('new_m_port').value.trim();
+            const type   = document.getElementById('new_m_type').value;
+            const weight = parseInt(document.getElementById('new_m_weight').value) || 5;
+
+            if (!name || !ip || !port) { showError('源名称、IP 和端口不能为空'); return; }
+            if (weight < 1 || weight > 10) { showError('权重必须在 1-10 之间'); return; }
+
+            apiReq('/dash/biz/sources', 'POST', { name, ip, port, type, weight, active: true });
+        }
+
+        function toggleActive(i) {
+            apiReq('/dash/biz/sources', 'POST', { ...sources[i], active: !sources[i].active });
+        }
+
+        function updateWeight(i, w) {
+            const weight = Math.min(10, Math.max(1, parseInt(w) || 5));
+            apiReq('/dash/biz/sources', 'POST', { ...sources[i], weight });
+        }
+
+        function delSource(name) {
+            Swal.fire({
+                icon: 'warning',
+                title: '确认删除',
+                html: '确认删除调度源 <strong>"' + name + '"</strong>？<br><small style="color:#94a3b8">此操作不可撤销</small>',
+                showCancelButton: true,
+                confirmButtonColor: '#ef4444',
+                cancelButtonColor: '#94a3b8',
+                confirmButtonText: '确认删除',
+                cancelButtonText: '取消'
+            }).then(r => {
+                if (r.isConfirmed) apiReq('/dash/biz/sources?name=' + encodeURIComponent(name), 'DELETE');
+            });
+        }
+
+        function logout() { localStorage.removeItem('dreamId'); location.href = '/dash/logout'; }
+        init();
+    </script>
+</body>
+</html>

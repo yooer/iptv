@@ -1,0 +1,20 @@
+# Binaries
+iptv
+iptv.exe
+api-proxy
+main
+main.exe
+
+# Configs
+config.ini
+*.env
+
+# Logs and runtime
+*.log
+*.pid
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
