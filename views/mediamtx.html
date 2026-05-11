@@ -652,7 +652,12 @@
                 return;
             }
             grid.innerHTML = nodes.map(n => {
-                const statusMap = { 0: '<span class="badge badge-gray">未安装</span>', 1: '<span class="badge badge-orange"><i class="fas fa-spinner fa-spin mr-1"></i> 安装中</span>', 2: '<span class="badge badge-green">运行中</span>', 3: '<span class="badge badge-red">异常</span>' };
+                const statusMap = { 
+                    0: '<span class="status-badge bg-light-light">未安装</span>', 
+                    1: '<span class="status-badge bg-light-warning"><i class="fas fa-spinner fa-spin mr-1"></i> 安装中</span>', 
+                    2: '<span class="status-badge bg-light-success">运行中</span>', 
+                    3: '<span class="status-badge bg-light-danger">异常</span>' 
+                };
                 const isRunning = n.status === 2, id = n.ip.replace(/\./g, '_');
                 return `
                     <tr>
