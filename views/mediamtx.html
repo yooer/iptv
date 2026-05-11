@@ -969,7 +969,30 @@
             }
         }
 
-        function copyToClipboard(text) { navigator.clipboard.writeText(text); Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: '已复制', showConfirmButton: false, timer: 1000 }); }
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: '已复制', showConfirmButton: false, timer: 1000 });
+                });
+            } else {
+                // 回退到传统方法
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                textArea.style.top = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: '已复制', showConfirmButton: false, timer: 1000 });
+                } catch (err) {
+                    console.error('无法复制', err);
+                }
+                document.body.removeChild(textArea);
+            }
+        }
         function logout() { location.href = '/dash/logout'; }
         document.addEventListener('DOMContentLoaded', loadNodes);
         setInterval(loadNodes, 30000);
