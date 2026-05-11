@@ -107,7 +107,7 @@
         .form-input-col { flex: 1; max-width: 580px; }
         .input-field { width: 100%; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 16px; font-size: 14px; color: #334155; outline: none; transition: border-color 0.2s, box-shadow 0.2s; background: #fff; }
         .input-field:focus { border-color: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.08); }
-        .form-hint { margin-top: 8px; font-size: 12px; color: #f87171; font-weight: 500; }
+        .form-hint { margin-top: 8px; font-size: 12px; color: #94a3b8; font-weight: 500; }
         .form-footer { display: flex; align-items: center; padding-top: 40px; border-top: 1px solid #f8fafc; }
         .form-footer-space { width: 22%; padding-right: 40px; flex-shrink: 0; }
         .btn-submit { background-color: #10B981; color: #fff; border: none; padding: 12px 40px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.2); transition: all 0.2s; }
@@ -360,7 +360,9 @@
             const type   = document.getElementById('new_m_type').value;
             const weight = parseInt(document.getElementById('new_m_weight').value) || 5;
 
-            if (!name || !ip || !port) { showError('源名称、IP 和端口不能为空'); return; }
+            if (!name) { showError('请输入“源名称”'); return; }
+            if (!ip) { showError('请输入“服务器 IP”'); return; }
+            if (!port) { showError('请输入“服务端口”'); return; }
             if (weight < 1 || weight > 10) { showError('权重必须在 1-10 之间'); return; }
 
             apiReq('/dash/biz/sources', 'POST', { name, ip, port, type, weight, active: true });
