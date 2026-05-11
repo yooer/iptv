@@ -365,7 +365,7 @@
             if (!port) { showError('请输入“服务端口”'); return; }
             if (weight < 1 || weight > 10) { showError('权重必须在 1-10 之间'); return; }
 
-            apiReq('/dash/biz/sources', 'POST', { name, ip, port, type, weight, active: true });
+            apiReq('/dash/biz/sources', 'POST', { name, ip, port, type, weight, active: false });
         }
 
         function toggleActive(i) {
