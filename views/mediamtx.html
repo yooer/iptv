@@ -663,7 +663,7 @@
                     <tr>
                         <td><span class="node-name">${n.name}</span><span class="node-ip">${n.ip}</span></td>
                         <td>${statusMap[n.status]}</td>
-                        <td><div style="display:flex; align-items:center;"><span class="pc-badge" id="node_paths_${id}">0</span><button onclick="showPaths('${n.ip}')" class="p-1 text-blue-500 hover:underline text-xs" style="background:none; border:none; cursor:pointer; font-weight:600; color:#3b82f6;" ${!isRunning ? 'disabled style="opacity:0.3;"' : ''}>管理</button></div></td>
+                        <td><div style="display:flex; align-items:center;"><span class="pc-badge" id="node_paths_${id}">0</span>${isRunning ? `<button onclick="showPaths('${n.ip}')" class="p-1 text-blue-500 hover:underline text-xs" style="background:none; border:none; cursor:pointer; font-weight:600; color:#3b82f6;">管理</button>` : ''}</div></td>
                         <td><div id="node_health_${id}" style="display:flex; gap:4px;"><span style="color:#94a3b8; font-size:10px;">-</span></div></td>
                         <td><div id="node_ver_${id}"><span class="status-badge bg-light-light" style="font-size:11px;">-</span></div></td>
                         <td><div id="node_upt_${id}"><span class="status-badge bg-light-light" style="font-size:11px;">-</span></div></td>
@@ -870,11 +870,24 @@
         }
 
         async function controlNode(ip, action) {
-            const r = await Swal.fire({ title: `确认执行操作？`, icon: 'warning', showCancelButton: true });
+            const r = await Swal.fire({ title: `确认执行操作 [${action}]？`, icon: 'warning', showCancelButton: true });
             if (r.isConfirmed) {
                 const res = await fetch(`/dash/biz/mtx-control?ip=${ip}&action=${action}`, { method: 'POST' });
                 const data = await res.json();
-                if (data.status) { Swal.fire('执行成功', '', 'success'); loadNodes(); }
+                if (data.status) {
+                    if (action === 'uninstall') {
+                        Swal.fire({
+                            title: '彻底卸载中...', width: '800px', html: `<div id="uninstall_term" class="terminal-box">正在连接...</div>`,
+                            didOpen: () => {
+                                const term = document.getElementById('uninstall_term'), ev = new EventSource(`/dash/biz/mtx-install-logs?ip=${ip}`);
+                                ev.onmessage = (e) => { term.innerText += e.data; term.scrollTop = term.scrollHeight; };
+                                ev.onerror = () => { term.innerText += '\n卸载流程结束\n'; ev.close(); loadNodes(); };
+                            }
+                        });
+                    } else {
+                        Swal.fire('执行成功', '', 'success'); loadNodes();
+                    }
+                }
             }
         }
 

@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -41,7 +41,7 @@ var installLogs sync.Map // map[string]chan string
 
 // RegisterMediaMTXRoutes 注册 MediaMTX 相关的所有路由
 func RegisterMediaMTXRoutes(biz *gin.RouterGroup, mtxColl *mongo.Collection) {
-	
+
 	// 1. 节点列表获取
 	biz.GET("/mtx-nodes", func(c *gin.Context) {
 		cursor, _ := mtxColl.Find(context.TODO(), bson.M{})
@@ -114,18 +114,22 @@ func RegisterMediaMTXRoutes(biz *gin.RouterGroup, mtxColl *mongo.Collection) {
 
 			logToFE(">>> 正在初始化远程环境...\n")
 			host = fmt.Sprintf("%s:%s", n.IP, n.SSHPort)
-			if n.SSHPort == "" { host = n.IP + ":22" }
+			if n.SSHPort == "" {
+				host = n.IP + ":22"
+			}
 
 			runWithLog = func(name, cmd string) error {
 				logToFE(fmt.Sprintf(">>> 执行: %s...\n", name))
 				config := &ssh.ClientConfig{
-					User: n.SSHUser,
-					Auth: []ssh.AuthMethod{ssh.Password(n.SSHPass)},
+					User:            n.SSHUser,
+					Auth:            []ssh.AuthMethod{ssh.Password(n.SSHPass)},
 					HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-					Timeout: 15 * time.Second,
+					Timeout:         15 * time.Second,
 				}
 				client, err := ssh.Dial("tcp", host, config)
-				if err != nil { return err }
+				if err != nil {
+					return err
+				}
 				defer client.Close()
 				session, _ := client.NewSession()
 				defer session.Close()
@@ -136,16 +140,24 @@ func RegisterMediaMTXRoutes(biz *gin.RouterGroup, mtxColl *mongo.Collection) {
 					buf := make([]byte, 1024)
 					for {
 						n, err := stdout.Read(buf)
-						if n > 0 { logToFE(string(buf[:n])) }
-						if err != nil { break }
+						if n > 0 {
+							logToFE(string(buf[:n]))
+						}
+						if err != nil {
+							break
+						}
 					}
 				}()
 				go func() {
 					buf := make([]byte, 1024)
 					for {
 						n, err := stderr.Read(buf)
-						if n > 0 { logToFE(string(buf[:n])) }
-						if err != nil { break }
+						if n > 0 {
+							logToFE(string(buf[:n]))
+						}
+						if err != nil {
+							break
+						}
 					}
 				}()
 				return session.Wait()
@@ -160,27 +172,36 @@ func RegisterMediaMTXRoutes(biz *gin.RouterGroup, mtxColl *mongo.Collection) {
 				echo '%s' | sudo -S ufw allow %s/tcp
 				echo '%s' | sudo -S ufw allow %s/tcp
 			`, n.SSHPass, n.SSHPass, n.SSHPass, n.APIPort, n.SSHPass, n.HLSPort, n.SSHPass, n.RTSPPort, n.SSHPass, n.MetricsPort))
-			if err != nil { logToFE("!!! 环境配置失败: " + err.Error()); goto END }
+			if err != nil {
+				logToFE("!!! 环境配置失败: " + err.Error())
+				goto END
+			}
 
 			// 2. 动态获取最新版本并下载
 			logToFE(">>> 正在查询 MediaMTX 最新发布版本...\n")
 			versionCmd = "curl -s https://api.github.com/repos/bluenviron/mediamtx/releases/latest | grep '\"tag_name\":' | sed -E 's/.*\"([^\"]+)\".*/\\1/'"
 			out, _ = runSSHCommand(host, n.SSHUser, n.SSHPass, versionCmd)
 			latestTag = strings.TrimSpace(out)
-			if latestTag == "" { latestTag = "v1.18.1" }
+			if latestTag == "" {
+				latestTag = "v1.18.1"
+			}
 			logToFE(">>> 目标安装版本: " + latestTag + "\n")
 
 			err = runWithLog("获取最新 MediaMTX 并安装", fmt.Sprintf(`
 				echo '%s' | sudo -S mkdir -p /opt/mediamtx
 				cd /tmp
-				wget -O mediamtx.tar.gz "https://github.com/bluenviron/mediamtx/releases/download/%s/mediamtx_%s_linux_amd64.tar.gz"
+				echo '>>> 尝试从官方 GitHub 下载...'
+				wget -O mediamtx.tar.gz "https://github.com/bluenviron/mediamtx/releases/download/%s/mediamtx_%s_linux_amd64.tar.gz" || {
+					echo '>>> 官方下载失败，正在切换至镜像源 (github.tool.do)...'
+					wget -O mediamtx.tar.gz "https://github.tool.do/bluenviron/mediamtx/releases/download/%s/mediamtx_%s_linux_amd64.tar.gz"
+				}
 				echo '%s' | sudo -S tar -xzf mediamtx.tar.gz -C /opt/mediamtx
 				rm mediamtx.tar.gz
-			`, n.SSHPass, latestTag, latestTag, n.SSHPass))
-			if err != nil { 
-				logToFE("!!! 下载安装失败: " + err.Error()); 
+			`, n.SSHPass, latestTag, latestTag, latestTag, latestTag, n.SSHPass))
+			if err != nil {
+				logToFE("!!! 下载安装失败: " + err.Error())
 				mtxColl.UpdateOne(context.TODO(), bson.M{"ip": ip}, bson.M{"$set": bson.M{"status": 3}})
-				goto END 
+				goto END
 			}
 
 			// 3. 生成配置 (从内嵌模板渲染)
@@ -232,7 +253,7 @@ WantedBy=multi-user.target
 				echo '>>> 实时启动状态检查:'
 				echo '%s' | sudo -S systemctl status mediamtx --no-pager
 			`, n.SSHPass, n.SSHPass, n.SSHPass, n.SSHPass, n.SSHPass)
-			
+
 			err = runWithLog("启动服务监控", startCmd)
 			if err == nil {
 				logToFE("\n>>> 恭喜！MediaMTX 安装成功并已上线！\n")
@@ -242,7 +263,9 @@ WantedBy=multi-user.target
 
 		END:
 			finalStatus := 2
-			if err != nil { finalStatus = 3 }
+			if err != nil {
+				finalStatus = 3
+			}
 			mtxColl.UpdateOne(context.TODO(), bson.M{"ip": ip}, bson.M{"$set": bson.M{"status": finalStatus, "version": latestTag}})
 			time.Sleep(2 * time.Second)
 		}()
@@ -276,7 +299,9 @@ WantedBy=multi-user.target
 		var n MediaMTXNode
 		mtxColl.FindOne(context.TODO(), bson.M{"ip": ip}).Decode(&n)
 		host := fmt.Sprintf("%s:%s", n.IP, n.SSHPort)
-		if n.SSHPort == "" { host = n.IP + ":22" }
+		if n.SSHPort == "" {
+			host = n.IP + ":22"
+		}
 
 		if action == "uninstall" {
 			// 卸载逻辑改为异步日志模式
@@ -286,7 +311,12 @@ WantedBy=multi-user.target
 				defer installLogs.Delete(ip)
 				defer close(ch)
 
-				logToFE := func(msg string) { select { case ch <- msg: default: } }
+				logToFE := func(msg string) {
+					select {
+					case ch <- msg:
+					default:
+					}
+				}
 				runWithLog := func(name, cmd string) error {
 					logToFE(fmt.Sprintf(">>> 执行: %s...\n", name))
 					config := &ssh.ClientConfig{
@@ -294,7 +324,9 @@ WantedBy=multi-user.target
 						HostKeyCallback: ssh.InsecureIgnoreHostKey(), Timeout: 10 * time.Second,
 					}
 					client, err := ssh.Dial("tcp", host, config)
-					if err != nil { return err }
+					if err != nil {
+						return err
+					}
 					defer client.Close()
 					session, _ := client.NewSession()
 					defer session.Close()
@@ -305,16 +337,24 @@ WantedBy=multi-user.target
 						buf := make([]byte, 1024)
 						for {
 							n, err := stdout.Read(buf)
-							if n > 0 { logToFE(string(buf[:n])) }
-							if err != nil { break }
+							if n > 0 {
+								logToFE(string(buf[:n]))
+							}
+							if err != nil {
+								break
+							}
 						}
 					}()
 					go func() {
 						buf := make([]byte, 1024)
 						for {
 							n, err := stderr.Read(buf)
-							if n > 0 { logToFE(string(buf[:n])) }
-							if err != nil { break }
+							if n > 0 {
+								logToFE(string(buf[:n]))
+							}
+							if err != nil {
+								break
+							}
 						}
 					}()
 					return session.Wait()
@@ -323,16 +363,21 @@ WantedBy=multi-user.target
 				logToFE(">>> 正在启动 MediaMTX 彻底卸载程序...\n")
 				// 1. 停止并禁用 (增加 || true 容错，防止服务不存在时中断)
 				err := runWithLog("停止并禁用服务", fmt.Sprintf("echo '%s' | sudo -S -p '' systemctl stop mediamtx || true; echo '%s' | sudo -S -p '' systemctl disable mediamtx || true", n.SSHPass, n.SSHPass))
-				if err != nil { logToFE("\n!!! 停止服务指令执行异常: " + err.Error() + "\n") }
+				if err != nil {
+					logToFE("\n!!! 停止服务指令执行异常: " + err.Error() + "\n")
+				}
 
 				// 2. 清理文件 (使用 -v 显示详情)
-				err = runWithLog("清理系统文件与目录", fmt.Sprintf("echo '%s' | sudo -S -p '' rm -fv /etc/systemd/system/mediamtx.service || true; echo '%s' | sudo -S -p '' rm -rfv /opt/mediamtx", n.SSHPass, n.SSHPass))
-				if err != nil { logToFE("\n!!! 清理文件失败: " + err.Error() + "\n"); return }
+				err = runWithLog("清理系统文件与目录", fmt.Sprintf("echo '%s' | sudo -S -p '' rm -fv /etc/systemd/system/mediamtx.service || true; echo '%s' | sudo -S -p '' rm -rfv /opt/mediamtx; echo '%s' | sudo -S -p '' systemctl daemon-reload", n.SSHPass, n.SSHPass, n.SSHPass))
+				if err != nil {
+					logToFE("\n!!! 清理文件失败: " + err.Error() + "\n")
+					return
+				}
 
 				// 3. 最终确认
 				logToFE(">>> 正在进行最后的物理状态校验...\n")
 				err = runWithLog("校验残留情况", "ls -d /opt/mediamtx 2>&1 || echo 'CONFIRMED: Directory is gone.'")
-				
+
 				logToFE("\n>>> 恭喜！MediaMTX 已从服务器彻底卸载并清理完毕！\n")
 				mtxColl.UpdateOne(context.TODO(), bson.M{"ip": ip}, bson.M{"$set": bson.M{"status": 0}})
 				time.Sleep(2 * time.Second)
@@ -343,14 +388,18 @@ WantedBy=multi-user.target
 
 		var cmd string
 		switch action {
-		case "restart": cmd = fmt.Sprintf("echo '%s' | sudo -S systemctl restart mediamtx", n.SSHPass)
-		case "stop":    cmd = fmt.Sprintf("echo '%s' | sudo -S systemctl stop mediamtx", n.SSHPass)
+		case "restart":
+			cmd = fmt.Sprintf("echo '%s' | sudo -S systemctl restart mediamtx", n.SSHPass)
+		case "stop":
+			cmd = fmt.Sprintf("echo '%s' | sudo -S systemctl stop mediamtx", n.SSHPass)
 		}
 		_, err := runSSHCommand(host, n.SSHUser, n.SSHPass, cmd)
 		if err != nil {
 			c.JSON(200, gin.H{"status": false, "msg": "操作失败"})
 		} else {
-			if action == "uninstall" { mtxColl.UpdateOne(context.TODO(), bson.M{"ip": ip}, bson.M{"$set": bson.M{"status": 0}}) }
+			if action == "uninstall" {
+				mtxColl.UpdateOne(context.TODO(), bson.M{"ip": ip}, bson.M{"$set": bson.M{"status": 0}})
+			}
 			c.JSON(200, gin.H{"status": true})
 		}
 	})
@@ -373,7 +422,7 @@ WantedBy=multi-user.target
 
 		// 关键点：注入 Basic Auth 认证头
 		req.SetBasicAuth(n.APIUser, n.APIPass)
-		
+
 		// 透传必要的 Header
 		req.Header.Set("Content-Type", c.GetHeader("Content-Type"))
 		req.Header.Set("Accept", "application/json")
@@ -393,16 +442,20 @@ WantedBy=multi-user.target
 // runSSHCommand 执行远程 SSH 命令
 func runSSHCommand(host, user, pass string, cmd string) (string, error) {
 	config := &ssh.ClientConfig{
-		User: user,
-		Auth: []ssh.AuthMethod{ssh.Password(pass)},
+		User:            user,
+		Auth:            []ssh.AuthMethod{ssh.Password(pass)},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-		Timeout: 15 * time.Second,
+		Timeout:         15 * time.Second,
 	}
 	client, err := ssh.Dial("tcp", host, config)
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 	defer client.Close()
 	session, err := client.NewSession()
-	if err != nil { return "", err }
+	if err != nil {
+		return "", err
+	}
 	defer session.Close()
 	out, err := session.CombinedOutput(cmd)
 	return string(out), err
