@@ -611,14 +611,19 @@ func runServer(portStr string) {
 
 		name := strings.TrimSuffix(filename, ".m3u8")
 		var redirectURL string
-		// 根据服务器类型构建重定向地址
-		if source.Type == "MistServer" {
+		// 统一转换为小写进行匹配，增强容错性
+		archType := strings.ToLower(source.Type)
+		
+		if archType == "mistserver" {
 			redirectURL = fmt.Sprintf("http://%s:%s/hls/%s/index.m3u8", source.IP, source.Port, name)
-		} else if source.Type == "MediaMTX" {
+		} else if archType == "mediamtx" {
 			redirectURL = fmt.Sprintf("http://%s:%s/%s/index.m3u8", source.IP, source.Port, name)
 		} else {
+			// 默认为 TamronOS 格式
 			redirectURL = fmt.Sprintf("http://%s:%s/%s.m3u8", source.IP, source.Port, name)
 		}
+		
+		log.Printf("[IPTV 调度] 类型: %s, %s -> %s", source.Type, filename, redirectURL)
 
 		// 保留原有的 URL 查询参数
 		if c.Request.URL.RawQuery != "" {
