@@ -500,8 +500,10 @@
                     <div class="stat-label" style="display:flex; justify-content:space-between; align-items:center;">
                         <span>总直播流</span>
                         <span style="text-transform:none; font-size:11px;">
-                            <span class="text-success" id="stat_ready_paths" style="color:#10b981; font-weight:700;">0</span> 在线 / 
-                            <span class="text-danger" id="stat_fail_paths" style="color:#ef4444; font-weight:700;">0</span> 离线
+                            <span class="text-success" id="stat_ready_paths"
+                                style="color:#10b981; font-weight:700;">0</span> 在线 /
+                            <span class="text-danger" id="stat_fail_paths"
+                                style="color:#ef4444; font-weight:700;">0</span> 离线
                         </span>
                     </div>
                 </div>
@@ -624,7 +626,7 @@
                             `;
                         }
                     }
-                } catch (e) {}
+                } catch (e) { }
             });
             await Promise.all(tasks);
             document.getElementById('stat_online').innerText = `${onlineNodes} / ${nodes.length}`;
@@ -652,11 +654,11 @@
                 return;
             }
             grid.innerHTML = nodes.map(n => {
-                const statusMap = { 
-                    0: '<span class="status-badge bg-light-light">未安装</span>', 
-                    1: '<span class="status-badge bg-light-warning"><i class="fas fa-spinner fa-spin mr-1"></i> 安装中</span>', 
-                    2: '<span class="status-badge bg-light-success">运行中</span>', 
-                    3: '<span class="status-badge bg-light-danger">异常</span>' 
+                const statusMap = {
+                    0: '<span class="status-badge bg-light-light">未安装</span>',
+                    1: '<span class="status-badge bg-light-warning"><i class="fas fa-spinner fa-spin mr-1"></i> 安装中</span>',
+                    2: '<span class="status-badge bg-light-success">运行中</span>',
+                    3: '<span class="status-badge bg-light-danger">异常</span>'
                 };
                 const isRunning = n.status === 2, id = n.ip.replace(/\./g, '_');
                 return `
@@ -699,17 +701,23 @@
                     <table style="width:100%; border-collapse:collapse;">
                         <thead style="position: sticky; top: 0; background: #f8fafc; border-bottom: 2px solid #e2e8f0; z-index:10;">
                             <tr>
+                                <th style="width:90px; text-align:center;">实时预览</th>
                                 <th style="padding:12px 15px; text-align:left;">频道名称</th>
                                 <th style="width:100px; text-align:center;">状态</th>
                                 <th style="width:120px; text-align:center;">HLS</th>
                                 <th style="width:80px; text-align:center;">在线</th>
-                                <th style="width:180px; text-align:center;">操作</th>
+                                <th style="width:150px; text-align:center;">操作</th>
                             </tr>
                         </thead>
                         <tbody>
                             ${items.map(p => {
-                                const hlsUrl = `http://${ip}:${hlsPort}/${p.name}/index.m3u8`, hasMuxer = muxers.some(m => m.path === p.name), pathSessions = sessions.filter(s => s.path === p.name).length;
-                                return `<tr style="border-bottom:1px solid #f8fafc; ${!p.ready ? 'background: #fffafa;' : ''}">
+                        const hlsUrl = `http://${ip}:${hlsPort}/${p.name}/index.m3u8`, hasMuxer = muxers.some(m => m.path === p.name), pathSessions = sessions.filter(s => s.path === p.name).length;
+                        return `<tr style="border-bottom:1px solid #f8fafc; ${!p.ready ? 'background: #fffafa;' : ''}">
+                                    <td style="text-align:center; padding:6px;">
+                                        <div style="width:72px; height:40px; border-radius:6px; overflow:hidden; background:#0f172a; margin:0 auto; cursor:pointer; box-shadow:0 2px 4px rgba(0,0,0,0.1); border:1px solid #cbd5e1; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.08)'" onmouseout="this.style.transform='scale(1)'" onclick="showOneSnapshot('${ip}', '${p.name}')" title="点击放大画面">
+                                            <img src="/dash/biz/mtx-snap/${ip}/snapshots/${p.name}.jpg?t=${new Date().getTime()}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='/static/img/offline_fallback.jpg'; this.onerror=null;">
+                                        </div>
+                                    </td>
                                     <td style="padding:12px 15px; text-align:left;"><b style="color:${!p.ready ? '#ef4444' : '#1e293b'}; font-size:13px;">${p.name}</b></td>
                                     <td style="text-align:center;"><span class="status-badge ${p.ready ? 'bg-light-success' : 'bg-light-danger'}" style="font-size:10px;">${p.ready ? '在线' : '离线'}</span></td>
                                     <td style="text-align:center;"><span class="status-badge ${hasMuxer ? 'bg-light-primary' : 'bg-light-info'}" style="font-size:10px;">${hasMuxer ? '切片中' : '未开启'}</span></td>
@@ -720,7 +728,7 @@
                                             <button onclick="copyToClipboard('${hlsUrl}')" class="btn-action" title="链接"><i class="fa-solid fa-link"></i></button>
                                             <button onclick="deletePath('${ip}', '${p.name}')" class="btn-action del" title="删除"><i class="fa-solid fa-trash"></i></button>
                                     </div></td></tr>`;
-                            }).join('')}
+                    }).join('')}
                         </tbody>
                     </table>
                 </div>`;
@@ -730,7 +738,10 @@
                     title: `频道调度中心 - ${ip}`, width: '950px',
                     html: `
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; gap:12px;">
-                            <button onclick="addPath('${ip}')" class="btn-add" style="padding:8px 16px; white-space:nowrap; flex-shrink:0;"><i class="fa-solid fa-plus"></i> 新增频道</button>
+                            <div style="display:flex; gap:10px;">
+                                <button onclick="addPath('${ip}')" class="btn-add" style="padding:8px 16px; white-space:nowrap;"><i class="fa-solid fa-plus"></i> 新增频道</button>
+                                <button onclick="showSnapshots('${ip}')" class="btn-add" style="background:#8b5cf6; padding:8px 16px; white-space:nowrap;"><i class="fa-solid fa-camera-retro"></i> 全景快照矩阵墙</button>
+                            </div>
                             <div style="flex-grow:1; display:flex; align-items:center; gap:10px; background:#f8fafc; padding:4px 12px; border-radius:8px; border:1px solid #e2e8f0;">
                                 <i class="fa-solid fa-search" style="color:#94a3b8; font-size:13px;"></i>
                                 <input id="path_search" class="input-field" placeholder="搜索频道..." style="border:none; background:transparent; padding:4px 0; height:32px;">
@@ -767,7 +778,7 @@
                                 allConns.push({ ...item, _type: labels[idx], _ep: ep, id: item.id || 'N/A', path: item.path || item.name || '-', addr: item.remoteAddr || '-' });
                             });
                         }
-                    } catch (err) {}
+                    } catch (err) { }
                 }));
                 Swal.fire({
                     title: `实时连接监视器 - ${ip}`, width: '900px',
@@ -840,8 +851,8 @@
 
         async function showNodeModal(ip = '') {
             const isNew = ip === '';
-            const node = !isNew ? nodes.find(n => n.ip === ip) : { 
-                name: '', ip: '', ssh_user: 'root', ssh_pass: '', ssh_port: '22', 
+            const node = !isNew ? nodes.find(n => n.ip === ip) : {
+                name: '', ip: '', ssh_user: 'root', ssh_pass: '', ssh_port: '22',
                 hls_port: '8888', api_port: '9997', rtsp_port: '8554', metrics_port: '9998',
                 api_user: generateRandomString(8), api_pass: generateRandomString(12)
             };
@@ -891,20 +902,170 @@
             }
         }
 
+        function parseFFmpegCmd(raw) {
+            if (!raw || (!raw.includes('ffmpeg') && !raw.startsWith('http'))) return { url: raw || '', vcodec: 'copy', acodec: 'aac', reconnect: true, clean: true };
+            if (raw.startsWith('http')) return { url: raw.trim(), vcodec: 'copy', acodec: 'aac', reconnect: true, clean: true };
+            const urlMatch = raw.match(/-i\s+["']?([^"'\s]+)["']?/);
+            const url = urlMatch ? urlMatch[1] : '';
+            const vcodec = raw.includes('libx264') ? 'libx264' : 'copy';
+            const acodec = raw.includes('-c:a copy') ? 'copy' : 'aac';
+            const reconnect = raw.includes('-reconnect 1');
+            const clean = raw.includes('+genpts');
+            return { url, vcodec, acodec, reconnect, clean };
+        }
+
+        function buildFFmpegCmd(ip, name, opts) {
+            if (!opts.url) return '';
+            const node = nodes.find(n => n.ip === ip) || {};
+            const rtspPort = node.rtsp_port || '8554';
+            let parts = ['ffmpeg -nostdin -nostats -hide_banner -loglevel warning -user_agent "Lavf/VLC" -headers "Connection: close\\r\\n" -http_persistent 0 -multiple_requests 1 -allowed_extensions ALL -protocol_whitelist "file,http,https,tcp,tls,crypto,udp,rtp"'];
+            if (opts.reconnect) {
+                parts.push('-reconnect 1 -reconnect_streamed 1 -reconnect_at_eof 1 -reconnect_on_network_error 1 -reconnect_on_http_error 4xx,5xx -reconnect_delay_max 10 -rw_timeout 15000000 -timeout 15000000');
+            }
+            if (opts.clean) {
+                parts.push('-fflags +genpts+discardcorrupt+nobuffer+igndts -flags low_delay -analyzeduration 10M -probesize 10M -err_detect ignore_err');
+            }
+            parts.push(`-i "${opts.url}" -map 0:v:0? -map 0:a? -map -0:s -dn -ignore_unknown`);
+            if (opts.vcodec === 'libx264') {
+                parts.push('-c:v libx264 -preset veryfast -profile:v high -level 4.0 -pix_fmt yuv420p -flags +cgop -g 50 -keyint_min 50 -sc_threshold 0 -b:v 2500k -maxrate 3500k -bufsize 7000k');
+            } else {
+                parts.push('-c:v copy -bsf:v h264_mp4toannexb -max_muxing_queue_size 4096');
+            }
+            if (opts.acodec === 'aac') {
+                parts.push('-c:a aac -b:a 128k -ac 2 -ar 44100 -af "aresample=async=1:min_hard_comp=0.100000:first_pts=0" -bsf:a aac_adtstoasc');
+            } else {
+                parts.push('-c:a copy');
+            }
+            parts.push(`-fps_mode passthrough -copyts -start_at_zero -muxdelay 0 -muxpreload 0 -buffer_size 52428800 -f rtsp -rtsp_transport tcp rtsp://127.0.0.1:${rtspPort}/${name}`);
+            return parts.join(' ');
+        }
+
         async function addPath(ip) {
-            const { value: form } = await Swal.fire({ title: '新增流', html: `<div style="text-align:left;"><label class="form-label">名称</label><input id="p_n" class="input-field"><label class="form-label" style="margin-top:15px;">源地址</label><textarea id="p_s" class="input-field" style="height:60px;"></textarea></div>`, preConfirm: () => [document.getElementById('p_n').value, document.getElementById('p_s').value] });
-            if (form && form[0] && form[1]) {
-                const [name, source] = form;
-                await fetch(`/dash/biz/mtx-proxy/${ip}/config/paths/add/${name}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ source }) });
+            const { value: form } = await Swal.fire({
+                title: '新增高可用直播流', width: '680px',
+                html: `<div style="text-align:left; font-size:13px; color:#334155;">
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label class="form-label" style="color:#1e293b;"><i class="fa-solid fa-satellite-dish mr-1"></i> 频道名称 (英文或数字标识)</label>
+                            <input id="cfg_name" class="input-field" placeholder="例如: cctv1">
+                        </div>
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label class="form-label" style="color:#1e293b;"><i class="fa-solid fa-link mr-1"></i> 直播源流拉取网址 (Source URL)</label>
+                            <input id="cfg_url" class="input-field" placeholder="例如: http://os.ott.../index.m3u8">
+                            <span style="font-size:11px; color:#64748b; margin-top:4px; display:block;">广电/运营商或摄像头的原始网络直播流地址。</span>
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                            <div class="form-group mb-0">
+                                <label class="form-label"><i class="fa-solid fa-video mr-1"></i> 视频处理策略 (-c:v)</label>
+                                <select id="cfg_vcodec" class="input-field" style="background:#fff;">
+                                    <option value="copy">⚡ 原画无损直通 (copy) - 极低CPU开销，推荐</option>
+                                    <option value="libx264">🖥️ Web转码归一化 (libx264) - 解决网页黑屏</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-0">
+                                <label class="form-label"><i class="fa-solid fa-volume-high mr-1"></i> 音频重采样策略 (-c:a)</label>
+                                <select id="cfg_acodec" class="input-field" style="background:#fff;">
+                                    <option value="aac">🎵 标准AAC归一化 (128k双声道) - 完美兼容</option>
+                                    <option value="copy">⚡ 音频原始直通 (copy)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:16px; border-radius:12px;">
+                            <div style="font-weight:700; font-size:13px; color:#1e293b; margin-bottom:12px;"><i class="fa-solid fa-shield-halved mr-1" style="color:#10b981;"></i> 工业级数据流防御矩阵</div>
+                            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; margin-bottom:10px;">
+                                <input type="checkbox" id="cfg_reconnect" checked style="margin-top:3px;">
+                                <div>
+                                    <b style="color:#1e293b;">无限次抗断网重连自愈 (-reconnect)</b>
+                                    <span style="font-size:11px; color:#64748b; display:block; margin-top:2px;">断网或源端重启时，自动以 10 秒间隔无限循环重连。</span>
+                                </div>
+                            </label>
+                            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+                                <input type="checkbox" id="cfg_clean" checked style="margin-top:3px;">
+                                <div>
+                                    <b style="color:#1e293b;">时间戳重构与残帧清洗 (+genpts+discardcorrupt)</b>
+                                    <span style="font-size:11px; color:#64748b; display:block; margin-top:2px;">自动丢弃花屏切片，并重写完美单调的 PTS 时间戳，根治音画不同步。</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>`,
+                showCancelButton: true, confirmButtonText: '生成配置并上线',
+                preConfirm: () => {
+                    const name = document.getElementById('cfg_name').value.trim();
+                    const url = document.getElementById('cfg_url').value.trim();
+                    if (!name || !url) { Swal.showValidationMessage('请填写频道名称和源网址！'); return null; }
+                    return {
+                        name, url,
+                        vcodec: document.getElementById('cfg_vcodec').value, acodec: document.getElementById('cfg_acodec').value,
+                        reconnect: document.getElementById('cfg_reconnect').checked, clean: document.getElementById('cfg_clean').checked
+                    };
+                }
+            });
+            if (form) {
+                const cmd = buildFFmpegCmd(ip, form.name, form);
+                const payload = { runOnInit: cmd, runOnInitRestart: true, source: "publisher" };
+                await fetch(`/dash/biz/mtx-proxy/${ip}/config/paths/add/${form.name}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 showPaths(ip);
             }
         }
 
         async function editSource(ip, name) {
             const r = await fetch(`/dash/biz/mtx-proxy/${ip}/config/paths/get/${name}`), cfg = await r.json();
-            const { value: src } = await Swal.fire({ title: '修改源', input: 'textarea', inputValue: cfg.source, showCancelButton: true });
-            if (src !== undefined) {
-                await fetch(`/dash/biz/mtx-proxy/${ip}/config/paths/patch/${name}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ source: src }) });
+            const rawVal = cfg.runOnInit || (cfg.source === 'publisher' ? '' : cfg.source) || '';
+            const opts = parseFFmpegCmd(rawVal);
+            const { value: form } = await Swal.fire({
+                title: `频道自愈调优 - ${name}`, width: '680px',
+                html: `<div style="text-align:left; font-size:13px; color:#334155;">
+                        <div class="form-group" style="margin-bottom:16px;">
+                            <label class="form-label" style="color:#1e293b;"><i class="fa-solid fa-link mr-1"></i> 直播源流拉取网址 (Source URL)</label>
+                            <input id="cfg_url" class="input-field" value="${opts.url}" placeholder="http://...">
+                        </div>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                            <div class="form-group mb-0">
+                                <label class="form-label"><i class="fa-solid fa-video mr-1"></i> 视频处理策略 (-c:v)</label>
+                                <select id="cfg_vcodec" class="input-field" style="background:#fff;">
+                                    <option value="copy" ${opts.vcodec === 'copy' ? 'selected' : ''}>⚡ 原画无损直通 (copy) - 极低CPU开销</option>
+                                    <option value="libx264" ${opts.vcodec === 'libx264' ? 'selected' : ''}>🖥️ Web转码归一化 (libx264) - 解决网页黑屏</option>
+                                </select>
+                            </div>
+                            <div class="form-group mb-0">
+                                <label class="form-label"><i class="fa-solid fa-volume-high mr-1"></i> 音频重采样策略 (-c:a)</label>
+                                <select id="cfg_acodec" class="input-field" style="background:#fff;">
+                                    <option value="aac" ${opts.acodec === 'aac' ? 'selected' : ''}>🎵 标准AAC归一化 (128k双声道)</option>
+                                    <option value="copy" ${opts.acodec === 'copy' ? 'selected' : ''}>⚡ 音频原始直通 (copy)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:16px; border-radius:12px;">
+                            <div style="font-weight:700; font-size:13px; color:#1e293b; margin-bottom:12px;"><i class="fa-solid fa-shield-halved mr-1" style="color:#10b981;"></i> 数据流防御配置</div>
+                            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer; margin-bottom:10px;">
+                                <input type="checkbox" id="cfg_reconnect" ${opts.reconnect ? 'checked' : ''} style="margin-top:3px;">
+                                <div>
+                                    <b style="color:#1e293b;">无限次抗断网重连自愈 (-reconnect)</b>
+                                    <span style="font-size:11px; color:#64748b; display:block;">断网或源端重启时，自动以 10 秒间隔无限重连。</span>
+                                </div>
+                            </label>
+                            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+                                <input type="checkbox" id="cfg_clean" ${opts.clean ? 'checked' : ''} style="margin-top:3px;">
+                                <div>
+                                    <b style="color:#1e293b;">时间戳重构与花屏清洗 (+genpts+discardcorrupt)</b>
+                                    <span style="font-size:11px; color:#64748b; display:block;">自动剔除花屏切片并重写单调时间戳，防音画脱节。</span>
+                                </div>
+                            </label>
+                        </div>
+                    </div>`,
+                showCancelButton: true, confirmButtonText: '保存热更新',
+                preConfirm: () => {
+                    const url = document.getElementById('cfg_url').value.trim();
+                    if (!url) { Swal.showValidationMessage('源流网址不能为空！'); return null; }
+                    return {
+                        url, vcodec: document.getElementById('cfg_vcodec').value, acodec: document.getElementById('cfg_acodec').value,
+                        reconnect: document.getElementById('cfg_reconnect').checked, clean: document.getElementById('cfg_clean').checked
+                    };
+                }
+            });
+            if (form) {
+                const cmd = buildFFmpegCmd(ip, name, form);
+                const payload = { runOnInit: cmd, runOnInitRestart: true, source: "publisher" };
+                await fetch(`/dash/biz/mtx-proxy/${ip}/config/paths/patch/${name}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
                 showPaths(ip);
             }
         }
@@ -942,25 +1103,25 @@
                 const container = document.getElementById('player_container');
                 const playerEl = document.getElementById('dplayer');
                 if (!container || !playerEl) return;
-                
+
                 container.style.display = 'block';
                 if (dpInstance) dpInstance.destroy();
-                dpInstance = new DPlayer({ 
-                    container: playerEl, 
-                    live: true, 
-                    autoplay: true, 
-                    video: { url: u, type: 'hls' } 
+                dpInstance = new DPlayer({
+                    container: playerEl,
+                    live: true,
+                    autoplay: true,
+                    video: { url: u, type: 'hls' }
                 });
                 container.scrollIntoView({ behavior: 'smooth' });
             };
 
             if (!window.DPlayer) {
-                const s = document.createElement('script'); 
-                s.src = 'https://cdn.bootcdn.net/ajax/libs/dplayer/1.27.0/DPlayer.min.js';
+                const s = document.createElement('script');
+                s.src = '/static/js/DPlayer.min.js';
                 s.onload = () => {
-                    const h = document.createElement('script'); 
-                    h.src = 'https://cdn.bootcdn.net/ajax/libs/hls.js/1.4.10/hls.min.js';
-                    h.onload = () => initDP(url); 
+                    const h = document.createElement('script');
+                    h.src = '/static/js/hls.min.js';
+                    h.onload = () => initDP(url);
                     document.head.appendChild(h);
                 };
                 document.head.appendChild(s);
@@ -993,6 +1154,105 @@
                 document.body.removeChild(textArea);
             }
         }
+        async function showSnapshots(ip) {
+            Swal.fire({ title: '加载实时快照矩阵...', didOpen: () => Swal.showLoading() });
+            try {
+                const [cfgRes, runRes] = await Promise.all([
+                    fetch(`/dash/biz/mtx-proxy/${ip}/config/paths/list?itemsPerPage=9999`),
+                    fetch(`/dash/biz/mtx-proxy/${ip}/paths/list?itemsPerPage=9999`)
+                ]);
+                const cfgData = await cfgRes.json(), runData = await runRes.json();
+                const cfgItems = cfgData.items || cfgData.list || [];
+                const runItems = runData.items || runData.list || [];
+                const runMap = {};
+                runItems.forEach(item => { if (item.name) runMap[item.name] = item; });
+
+                const allChannels = cfgItems.filter(p => p.name && p.name !== 'publisher' && p.name !== 'all_others').map(p => {
+                    const rObj = runMap[p.name];
+                    return {
+                        name: p.name,
+                        ready: rObj ? (rObj.ready || rObj.sourceReady || rObj.available || false) : false
+                    };
+                });
+
+                const renderGrid = (list) => {
+                    return `<div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(220px, 1fr)); gap:16px; max-height:600px; overflow-y:auto; padding:10px;">
+                        ${list.map(ch => {
+                        const snapUrl = `/dash/biz/mtx-snap/${ip}/snapshots/${ch.name}.jpg?t=${new Date().getTime()}`;
+                        return `<div style="background:#fff; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; box-shadow:0 4px 6px -1px rgba(0,0,0,0.05); position:relative; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+                                <div style="position:relative; width:100%; aspect-ratio:16/9; background:#0f172a; overflow:hidden;">
+                                    <img src="${snapUrl}" style="width:100%; height:100%; object-fit:cover;" onerror="this.src='/static/img/offline_fallback.jpg'; this.onerror=null;">
+                                    <div style="position:absolute; bottom:6px; right:6px; z-index:5;">
+                                        <button onclick="updateSingleSnapshot('${ip}', '${ch.name}')" class="btn-action blue" style="background:rgba(15,23,42,0.8); border:none; color:#fff;" title="刷新单图"><i class="fa-solid fa-rotate"></i></button>
+                                    </div>
+                                </div>
+                                <div style="padding:10px; display:flex; justify-content:space-between; align-items:center;">
+                                    <b style="font-size:13px; color:#1e293b;">${ch.name}</b>
+                                    <span class="status-badge ${ch.ready ? 'bg-light-success' : 'bg-light-danger'}" style="font-size:10px;">${ch.ready ? '在线' : '离线'}</span>
+                                </div>
+                            </div>`;
+                    }).join('')}
+                    </div>`;
+                };
+
+                Swal.fire({
+                    title: `全景实时监控快照墙 - ${ip}`, width: '1100px',
+                    html: `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; gap:16px;">
+                            <div style="font-size:13px; color:#64748b; white-space:nowrap;">共计 <b id="snap_count_b">${allChannels.length}</b> 个监控画面</div>
+                            <div style="flex-grow:1; max-width:360px; display:flex; align-items:center; gap:8px; background:#f8fafc; padding:4px 12px; border-radius:8px; border:1px solid #cbd5e1;">
+                                <i class="fa-solid fa-search" style="color:#94a3b8; font-size:13px;"></i>
+                                <input id="snap_search_input" class="input-field" placeholder="输入关键字极速检索频道画面..." style="border:none; background:transparent; padding:4px 0; width:100%; height:28px; font-size:13px; outline:none;">
+                            </div>
+                            <button onclick="triggerAllSnapshotsUpdate('${ip}')" class="btn-add" style="background:#10b981; padding:8px 16px; white-space:nowrap;"><i class="fa-solid fa-bolt mr-1"></i> 一键全量极速刷新</button>
+                        </div>
+                        <div id="snap_grid_container">${renderGrid(allChannels)}</div>
+                    `,
+                    didOpen: () => {
+                        const inp = document.getElementById('snap_search_input');
+                        if (inp) {
+                            inp.oninput = () => {
+                                const val = inp.value.toLowerCase();
+                                const filtered = allChannels.filter(c => c.name.toLowerCase().includes(val));
+                                document.getElementById('snap_grid_container').innerHTML = renderGrid(filtered);
+                                document.getElementById('snap_count_b').innerText = filtered.length;
+                            };
+                            inp.focus();
+                        }
+                    },
+                    showConfirmButton: false
+                });
+            } catch (e) { Swal.fire('加载快照失败', '', 'error'); }
+        }
+
+        async function triggerAllSnapshotsUpdate(ip) {
+            Swal.fire({ title: '已发起全量快照排队重构指令...', timer: 1500, timerProgressBar: true, showConfirmButton: false });
+            await fetch(`/dash/biz/mtx-snap/${ip}/api/v1/update-all`, { method: 'POST' });
+            setTimeout(() => showSnapshots(ip), 1500);
+        }
+
+        async function updateSingleSnapshot(ip, name) {
+            Swal.fire({ toast: true, position: 'top-end', title: `正在刷新 ${name}...`, showConfirmButton: false, timer: 1000 });
+            await fetch(`/dash/biz/mtx-snap/${ip}/api/v1/update/${name}`, { method: 'POST' });
+            setTimeout(() => showOneSnapshot(ip, name), 1000);
+        }
+
+        async function showOneSnapshot(ip, name) {
+            const snapUrl = `/dash/biz/mtx-snap/${ip}/snapshots/${name}.jpg?t=${new Date().getTime()}`;
+            Swal.fire({
+                title: `频道画面侦测 - ${name}`, width: '700px',
+                html: `
+                    <div style="background:#0f172a; border-radius:12px; overflow:hidden; aspect-ratio:16/9; display:flex; align-items:center; justify-content:center; box-shadow:0 10px 15px -3px rgba(0,0,0,0.3);">
+                        <img id="one_img_${name}" src="${snapUrl}" style="max-width:100%; max-height:100%; object-fit:contain;" onerror="this.src='/static/img/offline_fallback.jpg';">
+                    </div>
+                    <div style="margin-top:16px; text-align:center;">
+                        <button onclick="updateSingleSnapshot('${ip}', '${name}')" class="btn-add" style="background:#3b82f6;"><i class="fa-solid fa-rotate mr-1"></i> 即刻抓取最新帧</button>
+                    </div>
+                `,
+                showConfirmButton: false
+            });
+        }
+
         function logout() { location.href = '/dash/logout'; }
         document.addEventListener('DOMContentLoaded', loadNodes);
         setInterval(loadNodes, 30000);
