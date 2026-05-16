@@ -920,7 +920,7 @@
             const rtspPort = node.rtsp_port || '8554';
             let parts = ['ffmpeg -nostdin -nostats -hide_banner -loglevel warning -user_agent "Lavf/VLC" -headers "Connection: close\\r\\n" -http_persistent 0 -multiple_requests 1 -allowed_extensions ALL -protocol_whitelist "file,http,https,tcp,tls,crypto,udp,rtp"'];
             if (opts.reconnect) {
-                parts.push('-reconnect 1 -reconnect_streamed 1 -reconnect_at_eof 1 -reconnect_on_network_error 1 -reconnect_on_http_error 4xx,5xx -reconnect_delay_max 10 -rw_timeout 15000000 -timeout 15000000');
+                parts.push('-reconnect 1 -reconnect_streamed 1 -reconnect_at_eof 1 -reconnect_on_network_error 1 -reconnect_on_http_error 4xx,5xx -reconnect_delay_max 10 -rw_timeout 5000000 -timeout 5000000');
             }
             if (opts.clean) {
                 parts.push('-fflags +genpts+discardcorrupt+nobuffer+igndts -flags low_delay -analyzeduration 10M -probesize 10M -err_detect ignore_err');
